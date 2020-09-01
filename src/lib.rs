@@ -10,7 +10,7 @@ use models::Message;
 #[doc(inline)]
 pub use rule::Rule;
 
-/// Match the message and the rule expression (that is, the string form of the rule).
+/// Match the message and the expression (that is, the string form of the rule).
 pub fn match_expression<S: Into<String>>(_message: &Message, _expression: S) -> bool {
     panic!("This function has not been implemented yet!")
 }

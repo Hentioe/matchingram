@@ -1,8 +1,8 @@
-//! Types of Telegram bot API.
+//! All types used in a Bot API message.
 
 use std::rc::Rc;
 
-/// A Telegram message.
+/// This object represents a message.
 #[derive(Debug)]
 pub struct Message {
     /// Unique message identifier inside this chat.
@@ -66,59 +66,131 @@ pub struct Message {
     pub pinned_message: Option<Rc<Message>>,
 }
 
+/// This object represents a Telegram user or bot.
 #[derive(Debug)]
-pub struct Animation {}
+pub struct User {
+    pub id: i64,
+    pub is_bot: bool,
+    pub first_name: String,
+    pub last_name: Option<String>,
+    pub username: Option<String>,
+    pub language_code: Option<String>,
+}
 
+/// This object represents a chat.
 #[derive(Debug)]
-pub struct Audio {}
+pub struct Chat {
+    pub id: i64,
+    pub type_: String,
+    pub title: Option<String>,
+}
 
+/// This object represents one special entity in a text message.
+/// For example, hashtags, usernames, URLs, etc.
 #[derive(Debug)]
-pub struct MessageEntity {}
+pub struct MessageEntity {
+    pub type_: String,
+    pub offset: i32,
+    pub length: i32,
+    pub url: Option<String>,
+    pub user: Option<User>,
+    pub language: Option<String>,
+}
 
+/// This object represents an animation file (GIF or H.264/MPEG-4 AVC video without sound).
 #[derive(Debug)]
-pub struct Chat {}
+pub struct Animation {
+    pub duration: i32,
+    pub file_name: Option<String>,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents an audio file to be treated as music by the Telegram clients.
 #[derive(Debug)]
-pub struct Contact {}
+pub struct Audio {
+    pub duration: i32,
+    pub performer: Option<String>,
+    pub title: Option<String>,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents a general file (as opposed to photos, voice messages and audio files).
 #[derive(Debug)]
-pub struct Dice {}
+pub struct Document {
+    pub file_name: Option<String>,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents one size of a photo or a file / sticker thumbnail.
 #[derive(Debug)]
-pub struct Document {}
+pub struct PhotoSize {
+    pub width: i32,
+    pub height: i32,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents a sticker.
 #[derive(Debug)]
-pub struct User {}
+pub struct Sticker {
+    /// True, if the sticker is animated.
+    pub is_animated: bool,
+    /// Emoji associated with the sticker.
+    pub emoji: Option<String>,
+    /// Name of the sticker set to which the sticker belongs.
+    pub set_name: Option<String>,
+}
 
+/// This object represents a video file.
 #[derive(Debug)]
-pub struct Game {}
+pub struct Video {
+    pub duration: i32,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents a video message (available in Telegram apps as of v.4.0).
 #[derive(Debug)]
-pub struct Invoice {}
+pub struct VideoNote {
+    pub duration: i32,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents a voice note.
 #[derive(Debug)]
-pub struct Location {}
-#[derive(Debug)]
-pub struct PhotoSize {}
-#[derive(Debug)]
-pub struct PassportData {}
-#[derive(Debug)]
-pub struct Poll {}
-#[derive(Debug)]
-pub struct InlineKeyboardMarkup {}
+pub struct Voice {
+    pub duration: i32,
+    pub mime_type: Option<String>,
+    pub file_size: Option<i32>,
+}
 
+/// This object represents an animated emoji that displays a random value.
 #[derive(Debug)]
-pub struct Sticker {}
-#[derive(Debug)]
-pub struct SuccessfulPayment {}
+pub struct Dice {
+    /// Emoji on which the dice throw animation is based.
+    pub emoji: String,
+}
 
+/// This object contains information about a poll.
 #[derive(Debug)]
-pub struct Venue {}
+pub struct Poll {
+    /// Poll type, currently can be “regular” or “quiz”.
+    pub type_: String,
+}
 
+/// This object represents a venue.
 #[derive(Debug)]
-pub struct Video {}
+pub struct Venue {
+    pub location: Location,
+    pub title: String,
+    pub address: String,
+}
 
+/// This object represents a point on the map.
 #[derive(Debug)]
-pub struct VideoNote {}
-#[derive(Debug)]
-pub struct Voice {}
+pub struct Location {
+    pub longitude: f64,
+    pub latitude: f64,
+}

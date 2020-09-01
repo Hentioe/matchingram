@@ -1,5 +1,5 @@
 [package]
-name = "telegex_rule"
+name = "matching_engine"
 version = "0.1.0-dev"
 authors = ["Hentioe <me@bluerain.io>"]
 edition = "2018"

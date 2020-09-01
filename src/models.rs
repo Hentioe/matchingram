@@ -69,19 +69,24 @@ pub struct Message {
 /// This object represents a Telegram user or bot.
 #[derive(Debug)]
 pub struct User {
-    pub id: i64,
+    /// True, if this user is a bot.
     pub is_bot: bool,
+    /// User's or bot's first name.
     pub first_name: String,
+    /// User's or bot's last name.
     pub last_name: Option<String>,
+    /// User's or bot's username.
     pub username: Option<String>,
+    /// [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) of the user's language.
     pub language_code: Option<String>,
 }
 
 /// This object represents a chat.
 #[derive(Debug)]
 pub struct Chat {
-    pub id: i64,
+    /// Type of chat, can be either “private”, “group”, “supergroup” or “channel”.
     pub type_: String,
+    /// Title, for supergroups, channels and group chats.
     pub title: Option<String>,
 }
 
@@ -89,30 +94,50 @@ pub struct Chat {
 /// For example, hashtags, usernames, URLs, etc.
 #[derive(Debug)]
 pub struct MessageEntity {
+    /// Type of the entity. Can be “mention” (`@username`), “hashtag” (`#hashtag`),
+    /// “cashtag” (`$USD`), “bot_command” (`/start@jobs_bot`), “url” (`https://telegram.org`),
+    /// “email” (`do-not-reply@telegram.org`), “phone_number” (`+1-212-555-0123`), “bold” (**bold text**),
+    /// “italic” (_italic text_), “underline” (underlined text), “strikethrough” (strikethrough text),
+    /// “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs),
+    /// “text_mention” (for users without usernames).
     pub type_: String,
+    /// Offset in UTF-16 code units to the start of the entity.
     pub offset: i32,
+    /// Length of the entity in UTF-16 code units.
     pub length: i32,
+    /// For “text_link” only, url that will be opened after user taps on the text.
     pub url: Option<String>,
+    /// For “text_mention” only, the mentioned user.
     pub user: Option<User>,
+    /// For “pre” only, the programming language of the entity text.
     pub language: Option<String>,
 }
 
 /// This object represents an animation file (GIF or H.264/MPEG-4 AVC video without sound).
 #[derive(Debug)]
 pub struct Animation {
+    /// Duration of the video in seconds as defined by sender.
     pub duration: i32,
+    /// Original animation filename as defined by sender.
     pub file_name: Option<String>,
+    /// MIME type of the file as defined by sender.
     pub mime_type: Option<String>,
+    /// File size.
     pub file_size: Option<i32>,
 }
 
 /// This object represents an audio file to be treated as music by the Telegram clients.
 #[derive(Debug)]
 pub struct Audio {
+    /// Duration of the audio in seconds as defined by sender.
     pub duration: i32,
+    /// Performer of the audio as defined by sender or by audio tags.
     pub performer: Option<String>,
+    /// Title of the audio as defined by sender or by audio tags.
     pub title: Option<String>,
+    /// MIME type of the file as defined by sender.
     pub mime_type: Option<String>,
+    /// File size.
     pub file_size: Option<i32>,
 }
 

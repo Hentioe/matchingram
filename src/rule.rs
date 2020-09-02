@@ -41,7 +41,7 @@ use super::result::Result;
 ///         value: vec!["承接".to_owned(), "广告".to_owned()],
 ///     }],
 /// ];
-/// let mut rule = Rule::new(groups).unwrap();
+/// let mut rule = Rule::new(groups)?;
 /// // 两条典型的东南亚博彩招人消息
 /// let message_text1 = format!("柬埔寨菠菜需要的来");
 /// let message_text2 = format!("东南亚博彩招聘");
@@ -64,6 +64,7 @@ use super::result::Result;
 /// assert!(matches!(rule.match_message(&message1), Ok(true)));
 /// assert!(matches!(rule.match_message(&message2), Ok(true)));
 /// assert!(matches!(rule.match_message(&message3), Ok(true)));
+/// # Ok::<(), matchingram::Error>(())
 /// ```
 /// 它对应的字符串表达式为：
 /// ```text

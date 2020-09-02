@@ -17,4 +17,6 @@ pub enum Error {
     /// 不合法的值。
     #[error("the value `{value:?}` of the field `{field:?}` is invalid")]
     InvalidValue { value: String, field: String },
+    #[error("failed to parse from column `{column:?}`")]
+    ParseFailed { column: usize },
 }

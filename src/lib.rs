@@ -3,9 +3,13 @@
 //! Including keywords, message types, language codes,
 //! etc. Rules can have an `and` or `or` relationship.
 
+pub mod error;
 pub mod models;
+pub mod result;
 pub mod rule;
 
+#[doc(inline)]
+pub use error::Error;
 use models::Message;
 #[doc(inline)]
 pub use rule::Rule;
@@ -21,7 +25,7 @@ pub fn match_rule(_message: &Message, _rule: &Rule) -> bool {
 }
 
 /// Compile a string expression into a rule.
-/// For details, please refer to [`Rule::new`](struct.Rule.html#method.new) function.
-pub fn compile_rule<S: Into<String>>(expression: S) -> Rule {
-    Rule::new(expression)
+/// For details, please refer to [`Rule::prase`](struct.Rule.html#method.prase) function.
+pub fn compile_rule<S: Into<String>>(expression: S) -> Result<Rule, Error> {
+    Rule::prase(expression)
 }

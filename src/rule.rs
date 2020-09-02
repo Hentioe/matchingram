@@ -16,37 +16,66 @@ use super::result::Result;
 /// 结构化的规则内容。
 ///
 /// 负责解析字符串表达式并表达多个结构化的条件关系。
-/// 每个规则对象都是一系列有顺序的单元集合。
-///
-/// 手动创建一个规则对象：
+/// 每个规则对象都是一系列有顺序的条件组集合。
 /// ```
+/// use matchingram::models::Message;
 /// use matchingram::rule::*;
 ///
+/// // 手动创建一个规则对象：
 /// let groups = vec![
-///     vec![Cont {
-///         field: Field::MessageText,
-///         operator: Operator::ContainsOne,
-///         value: Value::Multi(vec!["hello".to_owned(), "world".to_owned()]),
-///     }],
+///     vec![
+///         Cont {
+///             field: Field::MessageText,
+///             operator: Operator::ContainsOne,
+///             value: vec!["柬埔寨".to_owned(), "东南亚".to_owned()],
+///         },
+///         Cont {
+///             field: Field::MessageText,
+///             operator: Operator::ContainsOne,
+///             value: vec!["菠菜".to_owned(), "博彩".to_owned()],
+///         },
+///     ],
 ///     vec![Cont {
 ///         field: Field::MessageText,
 ///         operator: Operator::ContainsAll,
-///         value: Value::Multi(vec!["hello".to_owned(), "bye".to_owned()]),
+///         value: vec!["承接".to_owned(), "广告".to_owned()],
 ///     }],
 /// ];
-/// let rule = Rule::new(groups);
+/// let mut rule = Rule::new(groups).unwrap();
+/// // 两条典型的东南亚博彩招人消息
+/// let message_text1 = format!("柬埔寨菠菜需要的来");
+/// let message_text2 = format!("东南亚博彩招聘");
+/// // 一条业务宣传消息
+/// let message_text3 = format!("承接博彩广告业务");
+///
+/// let message1 = Message {
+///     text: Some(message_text1),
+///     ..Default::default()
+/// };
+/// let message2 = Message {
+///     text: Some(message_text2),
+///     ..Default::default()
+/// };
+/// let message3 = Message {
+///     text: Some(message_text3),
+///     ..Default::default()
+/// };
+///
+/// assert!(matches!(rule.match_message(&message1), Ok(true)));
+/// assert!(matches!(rule.match_message(&message2), Ok(true)));
+/// assert!(matches!(rule.match_message(&message3), Ok(true)));
 /// ```
 /// 它对应的字符串表达式为：
 /// ```text
-/// (message.text contains_one {hello world}) or (message.text contains_all {hello bye})
+/// (message.text contains_one {柬埔寨 东南亚} and message.text contains_one {菠菜 博彩}) or (message.text contains_all {承接 广告})
 /// ```
 /// **注意**：结构化的规则中没有“关系”存在，因为规则中每一个独立的组之间一定是 `or` 关系，组内的条件之间一定是 `and` 关系。即：已存在隐式的关系表达。
 #[derive(Debug, Default)]
 pub struct Rule {
-    /// 单元集合
+    /// 条件组集合。
     pub groups: Vec<Vec<Cont>>,
     // 上一组的匹配结果
-    pub last_is_matching: bool,
+    last_is_matching: bool,
 }
 
 impl Rule {
@@ -80,7 +109,7 @@ pub struct Cont {
     /// 运算符。
     pub operator: Operator,
     /// 值。
-    pub value: Value,
+    pub value: Vec<String>,
 }
 
 /// 条件字段。
@@ -101,15 +130,6 @@ pub enum Operator {
     ContainsAll,
 }
 
-/// 条件值。
-#[derive(Debug, Clone)]
-pub enum Value {
-    /// 单值（字符串）
-    Single(String),
-    /// 多值（字符串）
-    Multi(Vec<String>),
-}
-
 impl Rule {
     pub fn match_message(&mut self, message: &Message) -> Result<bool> {
         self.loop_match(message, 0)
@@ -119,7 +139,7 @@ impl Rule {
         if position > 0 && self.last_is_matching {
             return Ok(true);
         }
-        if position >= (self.groups.len() - 1) {
+        if position > (self.groups.len() - 1) {
             return Ok(self.last_is_matching);
         }
 
@@ -142,15 +162,11 @@ impl Cont {
         match self.field {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
-                    let values = match self.value.clone() {
-                        Value::Single(value) => vec![value],
-                        Value::Multi(values) => values,
-                    };
                     match self.operator {
                         Operator::ContainsOne => {
                             let mut result = false;
-                            for v in values {
-                                if text.contains(&v) {
+                            for v in &self.value {
+                                if text.contains(v) {
                                     result = true;
                                     break;
                                 }
@@ -160,8 +176,8 @@ impl Cont {
                         }
                         Operator::ContainsAll => {
                             let mut result = true;
-                            for v in values {
-                                if !text.contains(&v) {
+                            for v in &self.value {
+                                if !text.contains(v) {
                                     result = false;
                                     break;
                                 }

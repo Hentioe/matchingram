@@ -3,10 +3,8 @@
 use std::rc::Rc;
 
 /// This object represents a message.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Message {
-    /// Unique message identifier inside this chat.
-    pub message_id: i64,
     /// Sender, empty for messages sent to channels.
     pub from: Option<User>,
     /// For forwarded messages, sender of the original message.

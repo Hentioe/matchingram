@@ -4,8 +4,8 @@
 //! etc. Rules can have an `and` or `or` relationship.
 
 pub mod error;
+pub mod lexer;
 pub mod models;
-pub mod parser;
 pub mod result;
 pub mod rule;
 

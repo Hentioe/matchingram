@@ -19,4 +19,8 @@ pub enum Error {
     InvalidValue { value: String, field: String },
     #[error("failed to parse from column `{column:?}`")]
     ParseFailed { column: usize },
+    #[error("missing field from column `{column:?}`")]
+    MissingField { column: usize },
+    #[error("missing operator from column `{column:?}`")]
+    MissingOperator { column: usize },
 }

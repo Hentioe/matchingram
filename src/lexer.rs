@@ -1,4 +1,48 @@
 //! 规则表达式的词法分析实现。
+//!
+//! 词法分析器并不保证语法上的正确性，但仍然具备一定的错误识别能力。例如通过前后关系才能确定的”字段“和”操作符“两个 token 类型。
+//! 一个例子：
+//! ```
+//! use matchingram::lexer::Lexer;
+//! use matchingram::lexer::Token::*;
+//!
+//! let expression = "(message.text contains_all \"bye\" and message.text contains_one {parent world}) or (message.text contains_one {see you})";
+//! let input = expression.chars().collect::<Vec<_>>();
+//!
+//! let mut lexer = Lexer::new(&input);
+//! lexer.tokenize().unwrap();
+//!
+//! let truthy = [
+//!     OpenParenthesis,
+//!     Field("message.text".to_owned()),
+//!     Operator("contains_all".to_owned()),
+//!     Quote,
+//!     Value("bye".to_owned()),
+//!     Quote,
+//!     And,
+//!     Field("message.text".to_owned()),
+//!     Operator("contains_one".to_owned()),
+//!     OpenBrace,
+//!     Value("parent world".to_owned()),
+//!     CloseBrace,
+//!     CloseParenthesis,
+//!     Or,
+//!     OpenParenthesis,
+//!     Field("message.text".to_owned()),
+//!     Operator("contains_one".to_owned()),
+//!     OpenBrace,
+//!     Value("see you".to_owned()),
+//!     CloseBrace,
+//!     CloseParenthesis,
+//!     EOF,
+//! ];
+//!
+//! assert_eq!(truthy.len(), lexer.tokens.len());
+//! for (i, token) in lexer.tokens.iter().enumerate() {
+//!     assert_eq!(truthy[i], *token);
+//! }
+//! # Ok::<(), matchingram::Error>(())
+//! ```
 
 use super::error::Error;
 use super::result::Result;
@@ -22,6 +66,10 @@ pub enum Token {
     Quote, // "
     /// 值。
     Value(String), // string
+    /// and 关键字。
+    And, // and
+    // or 关键字。
+    Or, // or
     /// 结束
     EOF,
 }
@@ -59,9 +107,10 @@ impl<'a> Lexer<'a> {
                 match current_char {
                     '(' => {
                         self.push_token(Token::OpenParenthesis);
+                        self.scan();
                         self.skip_white_space();
                         if !self.tokenize_field() {
-                            return Err(Error::MissingOperator {
+                            return Err(Error::MissingField {
                                 column: self.pos + 1,
                             });
                         }
@@ -84,6 +133,34 @@ impl<'a> Lexer<'a> {
                     '"' => {
                         self.push_token(Token::Quote);
                         self.tokenize_value(Token::Quote);
+                    }
+                    'o' => {
+                        if !self.tokenize_or() {
+                            return Err(Error::ParseFailed {
+                                column: self.pos + 1,
+                            });
+                        }
+                    }
+                    'a' => {
+                        if self.tokenize_and() {
+                            self.scan();
+                            self.skip_white_space();
+                            if !self.tokenize_field() {
+                                return Err(Error::MissingField {
+                                    column: self.pos + 1,
+                                });
+                            }
+                            self.skip_white_space();
+                            if !self.tokenize_operator() {
+                                return Err(Error::MissingOperator {
+                                    column: self.pos + 1,
+                                });
+                            }
+                        } else {
+                            return Err(Error::ParseFailed {
+                                column: self.pos + 1,
+                            });
+                        }
                     }
                     _ => {
                         return Err(Error::ParseFailed {
@@ -120,8 +197,7 @@ impl<'a> Lexer<'a> {
             next_char = self.at_char(cur_pos);
         }
 
-        // +1 是因为至少要保证存在一个字符
-        let is_field = cur_pos > (begin_pos + 1);
+        let is_field = cur_pos > begin_pos;
 
         if is_field {
             let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
@@ -146,8 +222,7 @@ impl<'a> Lexer<'a> {
             next_char = self.at_char(cur_pos);
         }
 
-        // +1 是因为至少要保证存在一个字符
-        let is_operator = cur_pos > (begin_pos + 1);
+        let is_operator = cur_pos > begin_pos;
 
         if is_operator {
             let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
@@ -162,7 +237,11 @@ impl<'a> Lexer<'a> {
         let begin_pos = self.pos + 1;
         let end_char = match end_token {
             Token::CloseBrace => '}',
-            Token::Quote => '"',
+            // 如果上上个是值，表示上一个引号是结束引号
+            Token::Quote => match self.tokens.get(self.tokens.len() - 2) {
+                Some(Token::Value(_)) => return false,
+                _ => '"',
+            },
             _ => return false,
         };
 
@@ -178,16 +257,42 @@ impl<'a> Lexer<'a> {
             next_char = self.at_char(cur_pos);
         }
 
-        // +1 是因为至少要保证存在一个字符
-        let is_value = cur_pos > (begin_pos + 1);
+        let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
+        let value = value.trim();
+
+        let is_value = cur_pos > begin_pos;
 
         if is_value {
-            let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
-            self.tokens.push(Token::Value(value.trim().to_string()));
+            self.tokens.push(Token::Value(value.to_string()));
             self.scan_at(cur_pos - 1);
         }
 
         return is_value;
+    }
+
+    fn tokenize_or(&mut self) -> bool {
+        if self.at_char(self.pos + 1) == Some(&'r') && self.at_char(self.pos + 2) == Some(&' ') {
+            self.scan_at(self.pos + 1);
+            self.push_token(Token::Or);
+
+            true
+        } else {
+            false
+        }
+    }
+
+    fn tokenize_and(&mut self) -> bool {
+        if self.at_char(self.pos + 1) == Some(&'n')
+            && self.at_char(self.pos + 2) == Some(&'d')
+            && self.at_char(self.pos + 3) == Some(&' ')
+        {
+            self.scan_at(self.pos + 2);
+            self.push_token(Token::And);
+
+            true
+        } else {
+            false
+        }
     }
 
     // 扫描下一个字符。此方法调用后会自增指针位置。
@@ -239,15 +344,4 @@ impl IsWhiteSpace for Option<&char> {
             false
         }
     }
-}
-
-#[test]
-fn test_tokenize() {
-    let expression = " (message.text contains_all { v1 v2  })";
-    let input = expression.chars().collect::<Vec<_>>();
-
-    let mut lexer = Lexer::new(&input);
-    lexer.tokenize().unwrap();
-
-    println!("{:?}", lexer.tokens);
 }

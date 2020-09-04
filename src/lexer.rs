@@ -1,4 +1,4 @@
-//! 规则表达式的词法分析实现。
+//! 基于规则表达式的词法分析实现。
 //!
 //! 词法分析器并不保证语法上的正确性，但仍然具备一定的错误识别能力。例如通过前后关系才能确定的”字段“和”操作符“两个 token 类型。
 //! 一个例子：
@@ -6,8 +6,8 @@
 //! use matchingram::lexer::Lexer;
 //! use matchingram::lexer::Token::*;
 //!
-//! let expression = "(message.text contains_all \"bye\" and message.text contains_one {parent world}) or (message.text contains_one {see you})";
-//! let input = expression.chars().collect::<Vec<_>>();
+//! let rule = "(message.text contains_all \"bye\" and message.text contains_one {parent world}) or (message.text contains_one {see you})";
+//! let input = rule.chars().collect::<Vec<_>>();
 //!
 //! let mut lexer = Lexer::new(&input);
 //! lexer.tokenize().unwrap();

@@ -1,4 +1,4 @@
-//! 所有可能出现的错误。
+//! 全部可能出现的错误。
 
 use thiserror::Error;
 
@@ -17,10 +17,13 @@ pub enum Error {
     /// 不合法的值。
     #[error("the value `{value:?}` of the field `{field:?}` is invalid")]
     InvalidValue { value: String, field: String },
-    #[error("failed to parse from column `{column:?}`")]
-    ParseFailed { column: usize },
+    /// 缺失字段。
     #[error("missing field from column `{column:?}`")]
     MissingField { column: usize },
+    /// 缺失操作符。
     #[error("missing operator from column `{column:?}`")]
     MissingOperator { column: usize },
+    /// 解析失败。
+    #[error("failed to parse from column `{column:?}`")]
+    ParseFailed { column: usize },
 }

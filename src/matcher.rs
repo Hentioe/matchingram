@@ -1,27 +1,18 @@
-//! Implementation of the rules.
-//!
-//! Cloudflare 防火墙规则分析：每一个条件由“字段” + “运算符” + “值” 构成。条件和条件之间可具备 `and` 或 `or` 的关系，不能嵌套。
-//! 字段通过点（`.`）进行分类。运算符使用 snake_case 风格命名。多值使用大括号（`{}`）包裹以及空格分隔，单值使用引号（`""`）包裹。
-//! 相邻的具有 `and` 关系的条件会被归纳到同一个括号中，但相邻的 `or` 关系的条件之间彼此独立。
-//! 一个具体的例子：
-//! ```text
-//! (ip.src in {1.1.1.1 192.168.1.1} and http.request.uri.query contains "page") or (ip.geoip.country eq "AF") or (http.request.method eq "POST")
-//! ```
-//! 本项目的规则的风格将与之完全一致。
+//! 消息匹配实现。
 
 use super::error::Error;
 use super::models::Message;
 use super::result::Result;
 
-/// 结构化的规则内容。
+/// 匹配器。一般作为表达式的编译目标。
 ///
-/// 负责解析字符串表达式并表达多个结构化的条件关系。
-/// 每个规则对象都是一系列有顺序的条件组集合。
+/// 匹配器可表达与字符串规则完全对应的结构化的条件关系。
+/// 每个匹配器对象都具备一个“条件组”序列。
 /// ```
 /// use matchingram::models::Message;
-/// use matchingram::rule::*;
+/// use matchingram::matcher::*;
 ///
-/// // 手动创建一个规则对象：
+/// // 手动创建一个匹配器对象：
 /// let groups = vec![
 ///     vec![
 ///         Cont {
@@ -41,7 +32,7 @@ use super::result::Result;
 ///         value: vec!["承接".to_owned(), "广告".to_owned()],
 ///     }],
 /// ];
-/// let mut rule = Rule::new(groups)?;
+/// let mut matcher = Matcher::new(groups)?;
 /// // 两条典型的东南亚博彩招人消息
 /// let message_text1 = format!("柬埔寨菠菜需要的来");
 /// let message_text2 = format!("东南亚博彩招聘");
@@ -61,44 +52,39 @@ use super::result::Result;
 ///     ..Default::default()
 /// };
 ///
-/// assert!(matches!(rule.match_message(&message1), Ok(true)));
-/// assert!(matches!(rule.match_message(&message2), Ok(true)));
-/// assert!(matches!(rule.match_message(&message3), Ok(true)));
+/// assert!(matches!(matcher.match_message(&message1), Ok(true)));
+/// assert!(matches!(matcher.match_message(&message2), Ok(true)));
+/// assert!(matches!(matcher.match_message(&message3), Ok(true)));
 /// # Ok::<(), matchingram::Error>(())
 /// ```
 /// 它对应的字符串表达式为：
 /// ```text
 /// (message.text contains_one {柬埔寨 东南亚} and message.text contains_one {菠菜 博彩}) or (message.text contains_all {承接 广告})
 /// ```
-/// **注意**：结构化的规则中没有“关系”存在，因为规则中每一个独立的组之间一定是 `or` 关系，组内的条件之间一定是 `and` 关系。即：已存在隐式的关系表达。
+/// **注意**：匹配器中的所有条件之间都没有显式的关系存在，因为匹配器中每一个独立的组之间一定是 `or` 关系，组内的条件之间一定是 `and` 关系。即：已存在隐式的关系表达。
 #[derive(Debug, Default)]
-pub struct Rule {
-    /// 条件组集合。
+pub struct Matcher {
+    /// 条件组序列。
     pub groups: Vec<Vec<Cont>>,
-    // 上一组的匹配结果
+    // 上个组的匹配结果。
     last_is_matching: bool,
 }
 
-impl Rule {
-    /// 解析字符串表达式创建规则对象，字符串将被扩展为具有特定的结构的规则对象。
-    /// 规则对象匹配将具有更快的速度，因为不需要再次对表达式进行扩展。
-    pub fn prase<S: Into<String>>(_expression: S) -> Result<Self> {
-        let rule = Rule {
-            groups: vec![],
-            last_is_matching: true,
-        };
-
-        Ok(rule)
+impl Matcher {
+    /// 将规则表达式解析为匹配器对象。
+    /// 相比规则表达式匹配器对象具有更高的性能，因为不用再经历编译过程。为了提升性能，可将规则预编译为匹配器对象再执行匹配动作。
+    pub fn prase<S: Into<String>>(_rule: S) -> Result<Self> {
+        panic!("This function has not been implemented yet!")
     }
 
-    /// 使用条件组创建规则对象。
+    /// 使用条件组创建匹配器对象。
     pub fn new(groups: Vec<Vec<Cont>>) -> Result<Self> {
-        let rule = Rule {
+        let matcher = Matcher {
             groups: groups,
             last_is_matching: true,
         };
 
-        Ok(rule)
+        Ok(matcher)
     }
 }
 
@@ -131,7 +117,7 @@ pub enum Operator {
     ContainsAll,
 }
 
-impl Rule {
+impl Matcher {
     pub fn match_message(&mut self, message: &Message) -> Result<bool> {
         self.loop_match(message, 0)
     }

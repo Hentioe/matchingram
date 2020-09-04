@@ -2,5 +2,5 @@
 
 use super::error::Error;
 
-/// 包装 [`matchingram::Error`](../enum.Error.html) 的 Result。
+/// 包装 [`Error`](../enum.Error.html) 的 Result。
 pub type Result<T> = std::result::Result<T, Error>;

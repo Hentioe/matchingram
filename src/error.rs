@@ -6,6 +6,8 @@ use thiserror::Error;
 /// 错误类别。
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("the first group of conditions is invalid")]
+    InvalidFirstGroup,
     /// 不支持的操作符。
     #[error("the field `{field:?}` does not support the `{operator:?}` operator")]
     UnsupportedOperator { field: String, operator: String },

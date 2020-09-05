@@ -1,5 +1,6 @@
 //! 全部可能出现的错误。
 
+use super::lexer::Token;
 use thiserror::Error;
 
 /// 错误类别。
@@ -23,6 +24,15 @@ pub enum Error {
     /// 缺失操作符。
     #[error("missing operator from column `{column:?}`")]
     MissingOperator { column: usize },
+    /// 缺失条件。
+    #[error("missing condition from column `{column:?}`")]
+    MissingCondition { column: usize },
+    /// 位置推断失败。
+    #[error("failed to infer position from token `{token:?}`")]
+    InferPositionFailed { token: Token },
+    /// 缺失 token 位置信息。
+    #[error("token `{token:?}` is missing position information, the {position:?}th")]
+    MissingTokenPosition { position: usize, token: Token },
     /// 解析失败。
     #[error("failed to parse from column `{column:?}`")]
     ParseFailed { column: usize },

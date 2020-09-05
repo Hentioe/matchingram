@@ -1,4 +1,4 @@
-//! 基于规则表达式的词法分析实现。
+//! 规则表达式的词法分析实现。
 //!
 //! 词法分析器并不保证语法上的正确性，但仍然具备一定的错误识别能力。例如通过前后关系才能确定的”字段“和”操作符“两个 token 类型。
 //! 一个例子：
@@ -10,36 +10,36 @@
 //! let input = rule.chars().collect::<Vec<_>>();
 //!
 //! let mut lexer = Lexer::new(&input);
-//! lexer.tokenize().unwrap();
+//! lexer.tokenize()?;
 //!
 //! let truthy = [
-//!     OpenParenthesis,
-//!     Field("message.text".to_owned()),
-//!     Operator("contains_all".to_owned()),
-//!     Quote,
-//!     Value("bye".to_owned()),
-//!     Quote,
-//!     And,
-//!     Field("message.text".to_owned()),
-//!     Operator("contains_one".to_owned()),
-//!     OpenBrace,
-//!     Value("parent world".to_owned()),
-//!     CloseBrace,
-//!     CloseParenthesis,
-//!     Or,
-//!     OpenParenthesis,
-//!     Field("message.text".to_owned()),
-//!     Operator("contains_one".to_owned()),
-//!     OpenBrace,
-//!     Value("see you".to_owned()),
-//!     CloseBrace,
-//!     CloseParenthesis,
-//!     EOF,
+//!     (OpenParenthesis, String::from("(")),
+//!     (Field, String::from("message.text")),
+//!     (Operator, String::from("contains_all")),
+//!     (Quote, String::from("\"")),
+//!     (Value, String::from("bye")),
+//!     (Quote, String::from("\"")),
+//!     (And, String::from("and")),
+//!     (Field, String::from("message.text")),
+//!     (Operator, String::from("contains_one")),
+//!     (OpenBrace, String::from("{")),
+//!     (Value, String::from("parent world")),
+//!     (CloseBrace, String::from("}")),
+//!     (CloseParenthesis, String::from(")")),
+//!     (Or, String::from("or")),
+//!     (OpenParenthesis, String::from("(")),
+//!     (Field, String::from("message.text")),
+//!     (Operator, String::from("contains_one")),
+//!     (OpenBrace, String::from("{")),
+//!     (Value, String::from("see you")),
+//!     (CloseBrace, String::from("}")),
+//!     (CloseParenthesis, String::from(")")),
+//!     (EOF, String::from("")),
 //! ];
 //!
 //! assert_eq!(truthy.len(), lexer.tokens.len());
-//! for (i, token) in lexer.tokens.iter().enumerate() {
-//!     assert_eq!(truthy[i], *token);
+//! for (i, mapping) in lexer.token_data_owner()?.into_iter().enumerate() {
+//!     assert_eq!(truthy[i], mapping);
 //! }
 //! # Ok::<(), matchingram::Error>(())
 //! ```
@@ -48,16 +48,16 @@ use super::error::Error;
 use super::result::Result;
 
 /// 所有的 Token。
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Token {
     /// 左小括号。
     OpenParenthesis, // (
     /// 右小括号。
     CloseParenthesis, // )
     /// 字段。
-    Field(String), // string
+    Field, // string
     /// 运算符。
-    Operator(String), // string
+    Operator, // string
     /// 左大括号。
     OpenBrace, // {
     /// 右大括号。
@@ -65,16 +65,16 @@ pub enum Token {
     /// 引号。
     Quote, // "
     /// 值。
-    Value(String), // string
+    Value, // string
     /// and 关键字。
     And, // and
-    // or 关键字。
+    /// or 关键字。
     Or, // or
     /// 结束
     EOF,
 }
 
-type Input = Vec<char>;
+type Input = [char];
 
 /// 词法分析器。
 #[derive(Debug)]
@@ -87,6 +87,14 @@ pub struct Lexer<'a> {
     pub current_char: Option<&'a char>,
     /// 全部的 Token。
     pub tokens: Vec<Token>,
+    /// 位置数据
+    pub positions: Vec<Position>,
+}
+
+#[derive(Debug)]
+pub struct Position {
+    pub begin: usize,
+    pub end: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -97,6 +105,7 @@ impl<'a> Lexer<'a> {
             pos: 0,
             current_char: input.get(0),
             tokens: vec![],
+            positions: vec![],
         }
     }
 
@@ -106,7 +115,7 @@ impl<'a> Lexer<'a> {
             if let Some(current_char) = self.current_char {
                 match current_char {
                     '(' => {
-                        self.push_token(Token::OpenParenthesis);
+                        self.push_token(Token::OpenParenthesis)?;
                         self.scan();
                         self.skip_white_space();
                         if !self.tokenize_field() {
@@ -121,28 +130,28 @@ impl<'a> Lexer<'a> {
                             });
                         }
                     }
-                    ')' => self.push_token(Token::CloseParenthesis),
+                    ')' => self.push_token(Token::CloseParenthesis)?,
                     '{' => {
-                        self.push_token(Token::OpenBrace);
+                        self.push_token(Token::OpenBrace)?;
                         self.tokenize_value(Token::CloseBrace);
                     }
                     '}' => {
-                        self.push_token(Token::CloseBrace);
+                        self.push_token(Token::CloseBrace)?;
                         self.skip_white_space();
                     }
                     '"' => {
-                        self.push_token(Token::Quote);
+                        self.push_token(Token::Quote)?;
                         self.tokenize_value(Token::Quote);
                     }
                     'o' => {
-                        if !self.tokenize_or() {
+                        if !self.tokenize_or()? {
                             return Err(Error::ParseFailed {
                                 column: self.pos + 1,
                             });
                         }
                     }
                     'a' => {
-                        if self.tokenize_and() {
+                        if self.tokenize_and()? {
                             self.scan();
                             self.skip_white_space();
                             if !self.tokenize_field() {
@@ -173,13 +182,58 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        self.tokens.push(Token::EOF);
+        self.push_token(Token::EOF)?;
 
         Ok(())
     }
 
     /// 追加一个 Token。
-    pub fn push_token(&mut self, token: Token) {
+    pub fn push_token(&mut self, token: Token) -> Result<()> {
+        use Token::*;
+
+        let position = match &token {
+            OpenParenthesis => Position {
+                begin: self.pos,
+                end: self.pos + 1,
+            },
+            CloseParenthesis => Position {
+                begin: self.pos,
+                end: self.pos + 1,
+            },
+            OpenBrace => Position {
+                begin: self.pos,
+                end: self.pos + 1,
+            },
+            CloseBrace => Position {
+                begin: self.pos,
+                end: self.pos + 1,
+            },
+            Quote => Position {
+                begin: self.pos,
+                end: self.pos + 1,
+            },
+            And => Position {
+                begin: self.pos - 2,
+                end: self.pos + 1,
+            },
+            Or => Position {
+                begin: self.pos - 1,
+                end: self.pos + 1,
+            },
+            EOF => Position {
+                begin: self.pos,
+                end: self.pos,
+            },
+            _ => return Err(Error::InferPositionFailed { token: token }),
+        };
+        self.positions.push(position);
+        self.tokens.push(token);
+
+        Ok(())
+    }
+
+    fn push_token_position(&mut self, token: Token, position: Position) {
+        self.positions.push(position);
         self.tokens.push(token);
     }
 
@@ -200,8 +254,13 @@ impl<'a> Lexer<'a> {
         let is_field = cur_pos > begin_pos;
 
         if is_field {
-            let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
-            self.tokens.push(Token::Field(value));
+            self.push_token_position(
+                Token::Field,
+                Position {
+                    begin: begin_pos,
+                    end: cur_pos,
+                },
+            );
             self.scan_at(cur_pos);
         }
 
@@ -225,8 +284,13 @@ impl<'a> Lexer<'a> {
         let is_operator = cur_pos > begin_pos;
 
         if is_operator {
-            let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
-            self.tokens.push(Token::Operator(value));
+            self.push_token_position(
+                Token::Operator,
+                Position {
+                    begin: begin_pos,
+                    end: cur_pos,
+                },
+            );
             self.scan_at(cur_pos);
         }
 
@@ -239,7 +303,7 @@ impl<'a> Lexer<'a> {
             Token::CloseBrace => '}',
             // 如果上上个是值，表示上一个引号是结束引号
             Token::Quote => match self.tokens.get(self.tokens.len() - 2) {
-                Some(Token::Value(_)) => return false,
+                Some(Token::Value) => return false,
                 _ => '"',
             },
             _ => return false,
@@ -257,41 +321,44 @@ impl<'a> Lexer<'a> {
             next_char = self.at_char(cur_pos);
         }
 
-        let value = self.input[begin_pos..cur_pos].iter().collect::<String>();
-        let value = value.trim();
-
         let is_value = cur_pos > begin_pos;
 
         if is_value {
-            self.tokens.push(Token::Value(value.to_string()));
+            self.push_token_position(
+                Token::Value,
+                Position {
+                    begin: begin_pos,
+                    end: cur_pos,
+                },
+            );
             self.scan_at(cur_pos - 1);
         }
 
         return is_value;
     }
 
-    fn tokenize_or(&mut self) -> bool {
+    fn tokenize_or(&mut self) -> Result<bool> {
         if self.at_char(self.pos + 1) == Some(&'r') && self.at_char(self.pos + 2) == Some(&' ') {
             self.scan_at(self.pos + 1);
-            self.push_token(Token::Or);
+            self.push_token(Token::Or)?;
 
-            true
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 
-    fn tokenize_and(&mut self) -> bool {
+    fn tokenize_and(&mut self) -> Result<bool> {
         if self.at_char(self.pos + 1) == Some(&'n')
             && self.at_char(self.pos + 2) == Some(&'d')
             && self.at_char(self.pos + 3) == Some(&' ')
         {
             self.scan_at(self.pos + 2);
-            self.push_token(Token::And);
+            self.push_token(Token::And)?;
 
-            true
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 
@@ -327,8 +394,40 @@ impl<'a> Lexer<'a> {
         return self.pos - begin_pos;
     }
 
+    /// 分析是否结束。
     pub fn is_end(&self) -> bool {
         self.pos > self.input.len() - 1
+    }
+
+    /// token 和对应数据的引用。
+    pub fn token_data(&self) -> Result<Vec<(&Token, &[char])>> {
+        let mut mapping = vec![];
+
+        for (i, token) in self.tokens.iter().enumerate() {
+            if let Some(position) = self.positions.get(i) {
+                let data = &self.input[position.begin..position.end];
+
+                mapping.push((token, data));
+            } else {
+                return Err(Error::MissingTokenPosition {
+                    position: i + 1,
+                    token: *token,
+                });
+            }
+        }
+
+        Ok(mapping)
+    }
+
+    /// token 和对应数据的值。
+    pub fn token_data_owner(&self) -> Result<Vec<(Token, String)>> {
+        let mut mapping = vec![];
+
+        for (token, data) in self.token_data()? {
+            mapping.push((*token, data.to_vec().iter().collect()));
+        }
+
+        Ok(mapping)
     }
 }
 

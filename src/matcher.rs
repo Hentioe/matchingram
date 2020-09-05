@@ -32,7 +32,7 @@ use super::result::Result;
 ///         value: vec!["承接".to_owned(), "广告".to_owned()],
 ///     }],
 /// ];
-/// let mut matcher = Matcher::new(groups)?;
+/// let mut matcher = Matcher::new(groups);
 /// // 两条典型的东南亚博彩招人消息
 /// let message_text1 = format!("柬埔寨菠菜需要的来");
 /// let message_text2 = format!("东南亚博彩招聘");
@@ -78,13 +78,11 @@ impl Matcher {
     }
 
     /// 使用条件组创建匹配器对象。
-    pub fn new(groups: Vec<Vec<Cont>>) -> Result<Self> {
-        let matcher = Matcher {
+    pub fn new(groups: Vec<Vec<Cont>>) -> Self {
+        Matcher {
             groups: groups,
             last_is_matching: true,
-        };
-
-        Ok(matcher)
+        }
     }
 }
 

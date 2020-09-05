@@ -12,35 +12,37 @@ type Input = Vec<Token>;
 /// 解析 [`Lexer::Token`](../lexer/enum.Token.html) 序列生成 [`Matcher`](../matcher/struct.Matcher.html)。
 #[derive(Debug)]
 pub struct Parser<'a> {
-    /// 输入。
+    /// 输入（token 序列）。
     pub input: &'a Input,
     /// 数据序列。
     pub data: Vec<&'a [char]>,
-    /// 位置信息
+    /// 位置序列。
     positions: &'a Vec<Position>,
-    // 指针位置。
+    // 当前指针。
     pos: usize,
     // 当前 token。
     pub current_token: Option<&'a Token>,
 }
 
 impl<'a> Parser<'a> {
-    /// 创建一个解析器。
-    pub fn from_lexer(lexer: &'a Lexer<'a>) -> Result<Self> {
+    /// 从词法分析器创建一个解析器。
+    pub fn from_lexer(lexer: &'a mut Lexer<'a>) -> Result<Self> {
+        // 确保已完成分析。
+        if !lexer.is_end() {
+            lexer.tokenize()?;
+        }
+        let input = lexer.output();
+
         Ok(Parser {
-            input: &lexer.tokens,
-            data: lexer
-                .token_data()?
-                .into_iter()
-                .map(|(_, data)| data)
-                .collect(),
-            positions: &lexer.positions,
+            input,
+            data: lexer.data(),
+            positions: lexer.positions(),
             pos: 0,
-            current_token: lexer.tokens.get(0),
+            current_token: input.get(0),
         })
     }
 
-    /// 解析并得到匹配器。
+    /// 解析并得到匹配器对象。
     pub fn parse(&mut self) -> Result<Matcher> {
         let groups = vec![];
 

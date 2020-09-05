@@ -37,7 +37,7 @@
 //!     (EOF, String::from("")),
 //! ];
 //!
-//! assert_eq!(truthy.len(), lexer.tokens.len());
+//! assert_eq!(truthy.len(), lexer.output().len());
 //! for (i, mapping) in lexer.token_data_owner()?.into_iter().enumerate() {
 //!     assert_eq!(truthy[i], mapping);
 //! }
@@ -81,14 +81,14 @@ type Input = [char];
 pub struct Lexer<'a> {
     /// 输入。
     pub input: &'a Input,
-    /// 指针位置。
-    pub pos: usize,
-    /// 当前字符。
-    pub current_char: Option<&'a char>,
-    /// 全部的 Token。
-    pub tokens: Vec<Token>,
-    /// 位置数据
-    pub positions: Vec<Position>,
+    // 当前指针。
+    pos: usize,
+    // 当前字符。
+    current_char: Option<&'a char>,
+    // 全部的 Token。
+    tokens: Vec<Token>,
+    // 位置序列。
+    positions: Vec<Position>,
 }
 
 #[derive(Debug)]
@@ -107,6 +107,16 @@ impl<'a> Lexer<'a> {
             tokens: vec![],
             positions: vec![],
         }
+    }
+
+    /// 获取输出（token 序列）。
+    pub fn output(&self) -> &Vec<Token> {
+        &self.tokens
+    }
+
+    /// 获取位置序列。
+    pub fn positions(&self) -> &Vec<Position> {
+        &self.positions
     }
 
     pub fn tokenize(&mut self) -> Result<()> {
@@ -399,7 +409,7 @@ impl<'a> Lexer<'a> {
         self.pos > self.input.len() - 1
     }
 
-    /// token 和对应数据的引用。
+    /// 生成 token 与数据（引用）的映射序列。
     pub fn token_data(&self) -> Result<Vec<(&Token, &[char])>> {
         let mut mapping = vec![];
 
@@ -419,7 +429,7 @@ impl<'a> Lexer<'a> {
         Ok(mapping)
     }
 
-    /// token 和对应数据的值。
+    /// 生成 token 与数据的映射序列。
     pub fn token_data_owner(&self) -> Result<Vec<(Token, String)>> {
         let mut mapping = vec![];
 
@@ -428,6 +438,28 @@ impl<'a> Lexer<'a> {
         }
 
         Ok(mapping)
+    }
+
+    /// 生成数据（引用）序列。
+    pub fn data(&self) -> Vec<&[char]> {
+        let mut sequence = vec![];
+
+        for position in self.positions.iter() {
+            sequence.push(&self.input[position.begin..position.end]);
+        }
+
+        sequence
+    }
+
+    /// 生成数据序列。
+    pub fn data_owner(&self) -> Vec<String> {
+        let mut sequence = vec![];
+
+        for position in self.positions.iter() {
+            sequence.push(self.input[position.begin..position.end].iter().collect());
+        }
+
+        sequence
     }
 }
 

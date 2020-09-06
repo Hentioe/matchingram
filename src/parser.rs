@@ -44,9 +44,9 @@
 //!     ..Default::default()
 //! };
 //!
-//! assert!(matches!(matcher.match_message(&message1), Ok(true)));
-//! assert!(matches!(matcher.match_message(&message2), Ok(true)));
-//! assert!(matches!(matcher.match_message(&message3), Ok(true)));
+//! assert!(matcher.match_message(&message1)?);
+//! assert!(matcher.match_message(&message2)?);
+//! assert!(matcher.match_message(&message3)?);
 //! # Ok::<(), matchingram::Error>(())
 //! ```
 
@@ -168,6 +168,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_cont(&mut self) -> Result<Cont> {
+        let is_negate = if self.current_token == Some(&Token::Not) {
+            self.scan();
+
+            true
+        } else {
+            false
+        };
+
         if self.current_token != Some(&Token::Field) {
             let position = self.current_position()?;
             return Err(Error::MissingField {
@@ -188,7 +196,7 @@ impl<'a> Parser<'a> {
         self.scan();
         let value = self.parse_value()?;
 
-        Ok(Cont::new(field, operator, value)?)
+        Ok(Cont::new(is_negate, field, operator, value)?)
     }
 
     fn parse_value(&mut self) -> Result<String> {
@@ -269,4 +277,37 @@ impl<'a> Parser<'a> {
             Err(Error::MissingPosition { index: self.pos })
         }
     }
+}
+
+#[test]
+fn test_not_cont() {
+    use super::models::Message;
+
+    let rule = "(not message.text contains_one {say: 说：})";
+    let input = rule.chars().collect::<Vec<_>>();
+
+    let mut lexer = Lexer::new(&input);
+    let parser = Parser::new(&mut lexer).unwrap();
+    let mut matcher = parser.parse().unwrap();
+
+    let text1 = format!("Jay say: Hello!");
+    let text2 = format!("小明说：你好！");
+    let text3 = format!("怎么发消息还得遵循格式啊？");
+
+    let message1 = Message {
+        text: Some(text1),
+        ..Default::default()
+    };
+    let message2 = Message {
+        text: Some(text2),
+        ..Default::default()
+    };
+    let message3 = Message {
+        text: Some(text3),
+        ..Default::default()
+    };
+
+    assert!(!matcher.match_message(&message1).unwrap());
+    assert!(!matcher.match_message(&message2).unwrap());
+    assert!(matcher.match_message(&message3).unwrap());
 }

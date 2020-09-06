@@ -26,17 +26,20 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])>
 /// let groups = vec![
 ///     vec![
 ///         Cont {
+///             is_negate: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
 ///             value: vec!["柬埔寨".to_owned(), "东南亚".to_owned()],
 ///         },
 ///         Cont {
+///             is_negate: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
 ///             value: vec!["菠菜".to_owned(), "博彩".to_owned()],
 ///         },
 ///     ],
 ///     vec![Cont {
+///         is_negate: false,
 ///         field: Field::MessageText,
 ///         operator: Operator::ContainsAll,
 ///         value: vec!["承接".to_owned(), "广告".to_owned()],
@@ -62,9 +65,9 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])>
 ///     ..Default::default()
 /// };
 ///
-/// assert!(matches!(matcher.match_message(&message1), Ok(true)));
-/// assert!(matches!(matcher.match_message(&message2), Ok(true)));
-/// assert!(matches!(matcher.match_message(&message3), Ok(true)));
+/// assert!(matcher.match_message(&message1)?);
+/// assert!(matcher.match_message(&message2)?);
+/// assert!(matcher.match_message(&message3)?);
 /// # Ok::<(), matchingram::Error>(())
 /// ```
 /// 它对应的字符串表达式为：
@@ -107,6 +110,8 @@ impl Matcher {
 /// 单个条件。
 #[derive(Debug)]
 pub struct Cont {
+    /// 是否取反。
+    pub is_negate: bool,
     /// 字段。
     pub field: Field,
     /// 运算符。
@@ -137,7 +142,12 @@ pub enum Operator {
 
 impl Cont {
     /// 从字符串数据中构建条件。
-    pub fn new(field_s: String, operator_s: String, value_s: String) -> Result<Self> {
+    pub fn new(
+        is_negate: bool,
+        field_s: String,
+        operator_s: String,
+        value_s: String,
+    ) -> Result<Self> {
         let operator =
             Operator::from_str(operator_s.as_str()).map_err(|_| Error::UnknownOperator {
                 operator: operator_s.clone(),
@@ -165,6 +175,7 @@ impl Cont {
             .collect::<Vec<_>>();
 
         Ok(Cont {
+            is_negate,
             field: *field,
             operator: operator,
             value,
@@ -199,6 +210,16 @@ impl Matcher {
     }
 }
 
+macro_rules! negating_wrap {
+    ($cont:ident, $result:ident) => {
+        if $cont.is_negate {
+            !$result
+        } else {
+            $result
+        }
+    };
+}
+
 impl Cont {
     pub fn match_message(&self, message: &Message) -> Result<bool> {
         match self.field {
@@ -214,7 +235,7 @@ impl Cont {
                                 }
                             }
 
-                            Ok(result)
+                            Ok(negating_wrap!(self, result))
                         }
                         Operator::ContainsAll => {
                             let mut result = true;
@@ -225,12 +246,13 @@ impl Cont {
                                 }
                             }
 
-                            Ok(result)
+                            Ok(negating_wrap!(self, result))
                         }
                         Operator::Eq => {
                             let value_s = self.value.join(" ");
+                            let result = text.eq(&value_s);
 
-                            Ok(text.eq(&value_s))
+                            Ok(negating_wrap!(self, result))
                         }
                         // _ => Err(Error::UnsupportedOperator {
                         //     field: self.field.to_string(),

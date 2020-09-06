@@ -70,6 +70,8 @@ pub enum Token {
     And, // and
     /// or 关键字。
     Or, // or
+    /// not 关键字。
+    Not, // not
     /// 结束
     EOF,
 }
@@ -128,7 +130,7 @@ impl<'a> Lexer<'a> {
                         self.push_token(Token::OpenParenthesis)?;
                         self.scan();
                         self.skip_white_space();
-                        if !self.tokenize_field() {
+                        if !self.tokenize_field()? {
                             return Err(Error::MissingField {
                                 column: self.pos + 1,
                             });
@@ -145,10 +147,7 @@ impl<'a> Lexer<'a> {
                         self.push_token(Token::OpenBrace)?;
                         self.tokenize_value(Token::CloseBrace);
                     }
-                    '}' => {
-                        self.push_token(Token::CloseBrace)?;
-                        self.skip_white_space();
-                    }
+                    '}' => self.push_token(Token::CloseBrace)?,
                     '"' => {
                         self.push_token(Token::Quote)?;
                         self.tokenize_value(Token::Quote);
@@ -164,7 +163,7 @@ impl<'a> Lexer<'a> {
                         if self.tokenize_and()? {
                             self.scan();
                             self.skip_white_space();
-                            if !self.tokenize_field() {
+                            if !self.tokenize_field()? {
                                 return Err(Error::MissingField {
                                     column: self.pos + 1,
                                 });
@@ -230,14 +229,17 @@ impl<'a> Lexer<'a> {
                 begin: self.pos - 1,
                 end: self.pos + 1,
             },
+            Not => Position {
+                begin: self.pos - 3,
+                end: self.pos,
+            },
             EOF => Position {
                 begin: self.pos,
                 end: self.pos,
             },
             _ => return Err(Error::InferPositionFailed { token: token }),
         };
-        self.positions.push(position);
-        self.tokens.push(token);
+        self.push_token_position(token, position);
 
         Ok(())
     }
@@ -247,7 +249,25 @@ impl<'a> Lexer<'a> {
         self.tokens.push(token);
     }
 
-    fn tokenize_field(&mut self) -> bool {
+    fn tokenize_not(&mut self) -> Result<bool> {
+        if self.at_char(self.pos) == Some(&'n')
+            && self.at_char(self.pos + 1) == Some(&'o')
+            && self.at_char(self.pos + 2) == Some(&'t')
+            && self.at_char(self.pos + 3).is_white_space()
+        {
+            self.scan_at(self.pos + 3);
+            self.push_token(Token::Not)?;
+
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn tokenize_field(&mut self) -> Result<bool> {
+        if self.tokenize_not()? {
+            self.skip_white_space();
+        }
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
         let mut next_char = self.at_char(cur_pos);
@@ -274,7 +294,7 @@ impl<'a> Lexer<'a> {
             self.scan_at(cur_pos);
         }
 
-        return is_field;
+        return Ok(is_field);
     }
 
     fn tokenize_operator(&mut self) -> bool {
@@ -470,9 +490,37 @@ trait IsWhiteSpace {
 impl IsWhiteSpace for Option<&char> {
     fn is_white_space(self) -> bool {
         if let Some(c) = self {
-            *c == ' '
+            c == &' ' || c == &'\n'
         } else {
             false
         }
+    }
+}
+
+#[test]
+fn test_not_token() {
+    use Token::*;
+
+    let rule = "(not message.text contains_one {say: 说：})";
+    let input = rule.chars().collect::<Vec<_>>();
+
+    let mut lexer = Lexer::new(&input);
+    lexer.tokenize().unwrap();
+
+    let truthy = [
+        (OpenParenthesis, String::from("(")),
+        (Not, String::from("not")),
+        (Field, String::from("message.text")),
+        (Operator, String::from("contains_one")),
+        (OpenBrace, String::from("{")),
+        (Value, String::from("say: 说：")),
+        (CloseBrace, String::from("}")),
+        (CloseParenthesis, String::from(")")),
+        (EOF, String::from("")),
+    ];
+
+    assert_eq!(truthy.len(), lexer.output().len());
+    for (i, mapping) in lexer.token_data_owner().unwrap().into_iter().enumerate() {
+        assert_eq!(truthy[i], mapping);
     }
 }

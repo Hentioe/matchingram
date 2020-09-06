@@ -1,10 +1,18 @@
 //! 消息匹配实现。
 
+use phf::phf_map;
+use std::str::FromStr;
+use strum_macros::{EnumString, ToString};
+
 use super::error::Error;
 use super::models::Message;
 use super::result::Result;
 
 pub type Groups = Vec<Vec<Cont>>;
+
+pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])> = phf_map! {
+    "message.text" => (Field::MessageText, &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll])
+};
 
 /// 匹配器。一般作为表达式的编译目标。
 ///
@@ -108,14 +116,16 @@ pub struct Cont {
 }
 
 /// 条件字段。
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, EnumString, ToString)]
 pub enum Field {
     /// 消息文本
+    #[strum(serialize = "message.text")]
     MessageText,
 }
 
 /// 条件操作符。
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, EnumString, ToString)]
+#[strum(serialize_all = "snake_case")]
 pub enum Operator {
     // 等于。
     Eq,
@@ -127,30 +137,36 @@ pub enum Operator {
 
 impl Cont {
     /// 从字符串数据中构建条件。
-    pub fn new(field: String, operator: String, value: String) -> Result<Self> {
-        let field = match field.as_str() {
-            "message.text" => Field::MessageText,
-            _ => {
-                return Err(Error::UnknownField { field });
-            }
-        };
+    pub fn new(field_s: String, operator_s: String, value_s: String) -> Result<Self> {
+        let operator =
+            Operator::from_str(operator_s.as_str()).map_err(|_| Error::UnknownOperator {
+                operator: operator_s.clone(),
+            })?;
 
-        let operator = match operator.as_str() {
-            "contains_one" => Operator::ContainsOne,
-            "contains_all" => Operator::ContainsAll,
-            _ => {
-                return Err(Error::UnknownOperator { operator });
-            }
-        };
+        let (field, operators) =
+            FIELD_OPERATORS
+                .get(field_s.as_str())
+                .ok_or(Error::UnknownField {
+                    field: field_s.clone(),
+                })?;
 
-        let value = value
+        // 检查运算符是否支持。
+        if !operators.contains(&operator) {
+            return Err(Error::UnsupportedOperator {
+                field: field_s,
+                operator: operator_s,
+            });
+        }
+
+        // 解析值。
+        let value = value_s
             .split_whitespace()
             .map(|v| v.to_string())
             .collect::<Vec<_>>();
 
         Ok(Cont {
-            field,
-            operator,
+            field: *field,
+            operator: operator,
             value,
         })
     }
@@ -211,33 +227,20 @@ impl Cont {
 
                             Ok(result)
                         }
-                        _ => Err(Error::UnsupportedOperator {
-                            field: self.field.to_string(),
-                            operator: self.operator.to_string(),
-                        }),
+                        Operator::Eq => {
+                            let value_s = self.value.join(" ");
+
+                            Ok(text.eq(&value_s))
+                        }
+                        // _ => Err(Error::UnsupportedOperator {
+                        //     field: self.field.to_string(),
+                        //     operator: self.operator.to_string(),
+                        // }),
                     }
                 } else {
                     Ok(false)
                 }
             }
-        }
-    }
-}
-
-impl ToString for Field {
-    fn to_string(&self) -> String {
-        match self {
-            Field::MessageText => format!("message.text"),
-        }
-    }
-}
-
-impl ToString for Operator {
-    fn to_string(&self) -> String {
-        match self {
-            Operator::Eq => format!("eq"),
-            Operator::ContainsAll => format!("contains_all"),
-            Operator::ContainsOne => format!("contains_one"),
         }
     }
 }

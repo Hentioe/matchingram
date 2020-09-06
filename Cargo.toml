@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1.0"
+phf = { version = "0.8", features = ["macros"] }
+strum = "0.19"
+strum_macros = "0.19"

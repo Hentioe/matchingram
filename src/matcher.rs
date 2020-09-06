@@ -4,6 +4,8 @@ use super::error::Error;
 use super::models::Message;
 use super::result::Result;
 
+pub type Groups = Vec<Vec<Cont>>;
+
 /// 匹配器。一般作为表达式的编译目标。
 ///
 /// 匹配器可表达与字符串规则完全对应的结构化的条件关系。
@@ -65,7 +67,7 @@ use super::result::Result;
 #[derive(Debug, Default)]
 pub struct Matcher {
     /// 条件组序列。
-    pub groups: Vec<Vec<Cont>>,
+    pub groups: Groups,
     // 上个组的匹配结果。
     last_is_matching: bool,
 }
@@ -78,7 +80,7 @@ impl Matcher {
     }
 
     /// 使用条件组创建匹配器对象。
-    pub fn new(groups: Vec<Vec<Cont>>) -> Self {
+    pub fn new(groups: Groups) -> Self {
         Matcher {
             groups: groups,
             last_is_matching: true,
@@ -113,6 +115,37 @@ pub enum Operator {
     ContainsOne,
     /// 包含全部。
     ContainsAll,
+}
+
+impl Cont {
+    /// 从字符串数据中构建条件。
+    pub fn new(field: String, operator: String, value: String) -> Result<Self> {
+        let field = match field.as_str() {
+            "message.text" => Field::MessageText,
+            _ => {
+                return Err(Error::UnknownField { field });
+            }
+        };
+
+        let operator = match operator.as_str() {
+            "contains_one" => Operator::ContainsOne,
+            "contains_all" => Operator::ContainsAll,
+            _ => {
+                return Err(Error::UnknownOperator { operator });
+            }
+        };
+
+        let value = value
+            .split_whitespace()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>();
+
+        Ok(Cont {
+            field,
+            operator,
+            value,
+        })
+    }
 }
 
 impl Matcher {

@@ -1,21 +1,64 @@
 //! 规则表达式的文法分析实现。
 //!
 //! 产生式：
-//! <规则> -> <条件组> <可选条件组列表>
+//! ```text
+//! <规则> -> <条件组> <可选条件组列表> <EOF>
 //! <条件组> -> <(> <条件> <可选条件列表> <)>
-//! <条件> -> <字段> <运算符> <值>
-//! <可选条件列表> -> <and> <条件> <可选条件列表>
-//! <可选条件组列表> -> <or> <条件组> <可选条件组列表>
+//! <条件> -> <字段> <运算符> <值表示>
+//! <值表示> -> <{> <值> <}> | <"> <值> <">
+//! <可选条件列表> -> <and> <条件> <可选条件列表> | <空>
+//! <可选条件组列表> -> <or> <条件组> <可选条件组列表> | <空>
+//! ```
+//!
+//! 当前的实现基于递归下降算法，语法制导直接生成 [`Matcher`](../matcher/struct.Matcher.html) 对象。
+//!
+//! 一个使用案例：
+//! ```
+//! use matchingram::models::Message;
+//! use matchingram::lexer::Lexer;
+//! use matchingram::parser::Parser;
+//!
+//! // 准备规则，用于匹配东南亚博彩或广告业务宣传。
+//! let rule = "(message.text contains_one {柬埔寨 东南亚} and message.text contains_one {菠菜 博彩}) or (message.text contains_all {承接 广告})";
+//! // 解析规则并得到 matcher 对象。
+//! let input = rule.chars().collect::<Vec<_>>();
+//! let mut lexer = Lexer::new(&input);
+//! let parser = Parser::new(&mut lexer)?;
+//! let mut matcher = parser.parse()?;
+//! // 两条典型的东南亚博彩招人消息。
+//! let message_text1 = format!("柬埔寨菠菜需要的来");
+//! let message_text2 = format!("东南亚博彩招聘");
+//! // 一条业务宣传消息。
+//! let message_text3 = format!("承接博彩广告业务");
+//!
+//! let message1 = Message {
+//!     text: Some(message_text1),
+//!     ..Default::default()
+//! };
+//! let message2 = Message {
+//!     text: Some(message_text2),
+//!     ..Default::default()
+//! };
+//! let message3 = Message {
+//!     text: Some(message_text3),
+//!     ..Default::default()
+//! };
+//!
+//! assert!(matches!(matcher.match_message(&message1), Ok(true)));
+//! assert!(matches!(matcher.match_message(&message2), Ok(true)));
+//! assert!(matches!(matcher.match_message(&message3), Ok(true)));
+//! # Ok::<(), matchingram::Error>(())
+//! ```
 
 use super::error::Error;
 use super::lexer::{Lexer, Position, Token};
-use super::matcher::Matcher;
+use super::matcher::{Cont, Groups as ContGroups, Matcher};
 use super::result::Result;
 
 type Input = Vec<Token>;
 
 /// 文法分析器。
-/// 解析 [`Lexer::Token`](../lexer/enum.Token.html) 序列生成 [`Matcher`](../matcher/struct.Matcher.html)。
+/// 解析 [`Lexer::Token`](../lexer/enum.Token.html) 序列生成 [`Matcher`](../matcher/struct.Matcher.html) 对象。
 #[derive(Debug)]
 pub struct Parser<'a> {
     /// 输入（token 序列）。
@@ -32,7 +75,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     /// 从词法分析器创建一个解析器。
-    pub fn from_lexer(lexer: &'a mut Lexer<'a>) -> Result<Self> {
+    pub fn new(lexer: &'a mut Lexer<'a>) -> Result<Self> {
         // 确保已完成分析。
         if !lexer.is_end() {
             lexer.tokenize()?;
@@ -49,37 +92,165 @@ impl<'a> Parser<'a> {
     }
 
     /// 解析并得到匹配器对象。
-    pub fn parse(&mut self) -> Result<Matcher> {
-        if !self.parse_group()? {
-            return Err(Error::InvalidFirstGroup);
+    pub fn parse(mut self) -> Result<Matcher> {
+        let mut groups: ContGroups = vec![];
+
+        groups.push(self.parse_group()?);
+
+        self.scan();
+        groups.append(&mut self.parse_optinal_group_list(vec![])?);
+
+        self.scan();
+        if self.current_token != Some(&Token::EOF) {
+            let position = self.current_position()?;
+            return Err(Error::ShouldEndHere {
+                column: position.begin,
+            });
         }
 
-        Ok(Matcher::new(vec![]))
+        Ok(Matcher::new(groups))
     }
 
-    fn parse_group(&mut self) -> Result<bool> {
+    fn parse_group(&mut self) -> Result<Vec<Cont>> {
         if self.current_token != Some(&Token::OpenParenthesis) {
-            return Ok(false);
+            let position = self.current_position()?;
+            return Err(Error::ShouldOpenParenthesisHere {
+                column: position.begin,
+            });
+        }
+
+        let mut conts = vec![];
+
+        self.scan();
+        conts.push(self.parse_cont()?);
+
+        self.scan();
+
+        let mut optinal_conts = self.parse_optinal_cont_list(vec![])?;
+        if optinal_conts.len() > 0 {
+            self.scan();
+            conts.append(&mut optinal_conts);
+        }
+
+        if self.current_token != Some(&Token::CloseParenthesis) {
+            let position = self.current_position()?;
+            return Err(Error::ShouldCloseParenthesisHere {
+                column: position.begin,
+            });
+        }
+
+        Ok(conts)
+    }
+
+    fn parse_optinal_cont_list(&mut self, mut conts: Vec<Cont>) -> Result<Vec<Cont>> {
+        if self.current_token != Some(&Token::And) {
+            return Ok(conts);
         }
 
         self.scan();
-        if !self.parse_cont()? {
-            return Ok(false);
+        conts.push(self.parse_cont()?);
+
+        self.parse_optinal_cont_list(conts)
+    }
+
+    fn parse_optinal_group_list(&mut self, mut groups: ContGroups) -> Result<ContGroups> {
+        if self.current_token != Some(&Token::Or) {
+            return Ok(groups);
         }
 
         self.scan();
-        // TODO：解析后续。
+        groups.push(self.parse_group()?);
 
-        Ok(true)
+        self.parse_optinal_group_list(groups)
     }
 
-    fn parse_cont(&mut self) -> Result<bool> {
-        // TODO: 实现这里。
-        self.scan_at(self.pos + 4);
-        Ok(true)
+    fn parse_cont(&mut self) -> Result<Cont> {
+        if self.current_token != Some(&Token::Field) {
+            let position = self.current_position()?;
+            return Err(Error::MissingField {
+                column: position.begin,
+            });
+        }
+        let field = self.current_data()?.iter().collect();
+
+        self.scan();
+        if self.current_token != Some(&Token::Operator) {
+            let position = self.current_position()?;
+            return Err(Error::MissingOperator {
+                column: position.begin,
+            });
+        }
+        let operator = self.current_data()?.iter().collect();
+
+        self.scan();
+        let value = self.parse_value()?;
+
+        Ok(Cont::new(field, operator, value)?)
     }
 
-    // // 扫描下一个 token。此方法会将指针向后移动一位。
+    fn parse_value(&mut self) -> Result<String> {
+        match self.current_token {
+            Some(Token::Quote) => {
+                self.scan();
+                if self.current_token != Some(&Token::Value) {
+                    let position = self.current_position()?;
+                    return Err(Error::MissingValue {
+                        column: position.begin,
+                    });
+                }
+                self.scan();
+                if self.current_token != Some(&Token::Quote) {
+                    let position = self.current_position()?;
+                    return Err(Error::ShouldQuoteHere {
+                        column: position.begin,
+                    });
+                }
+            }
+
+            Some(Token::OpenBrace) => {
+                self.scan();
+                if self.current_token != Some(&Token::Value) {
+                    let position = self.current_position()?;
+                    return Err(Error::MissingValue {
+                        column: position.begin,
+                    });
+                }
+                self.scan();
+                if self.current_token != Some(&Token::CloseBrace) {
+                    let position = self.current_position()?;
+                    return Err(Error::ShouldCloseBraceHere {
+                        column: position.begin,
+                    });
+                }
+            }
+
+            _ => {
+                let position = self.current_position()?;
+                return Err(Error::ShouldOpenBraceOrQuote {
+                    column: position.begin,
+                });
+            }
+        }
+
+        let value = self.at_data(self.pos - 1)?.iter().collect();
+
+        Ok(value)
+    }
+
+    // 当前位置的 token 数据引用。
+    fn current_data(&self) -> Result<&'a [char]> {
+        self.at_data(self.pos)
+    }
+
+    // 指定位置的 token 数据引用。
+    fn at_data(&self, pos: usize) -> Result<&'a [char]> {
+        self.data
+            .get(pos)
+            .cloned()
+            .ok_or(Error::MissingTokenData { index: self.pos })
+    }
+
+    // 扫描下一个 token。此方法会将指针向后移动一位。
     fn scan(&mut self) -> Option<&Token> {
         self.pos += 1;
         self.current_token = self.input.get(self.pos);
@@ -87,42 +258,12 @@ impl<'a> Parser<'a> {
         self.current_token
     }
 
-    // fn get_current_position(&self) -> &Position {
-    //     if let Some(position) = self.positions.get(self.pos) {
-    //         position
-    //     } else {
-    //         self.positions.last().unwrap()
-    //     }
-    // }
-
-    // // 访问指定位置的 token。此方法不移动指针位置。
-    // fn at_token(&self, pos: usize) -> Option<&Token> {
-    //     self.input.get(pos)
-    // }
-
-    // 扫描指定位置的指针。此方法会将指针移动到指定位置。
-    fn scan_at(&mut self, pos: usize) -> Option<&Token> {
-        self.pos = pos;
-
-        self.input.get(self.pos)
+    // 当前 token 的位置信息。
+    fn current_position(&self) -> Result<&Position> {
+        if let Some(position) = self.positions.get(self.pos) {
+            Ok(position)
+        } else {
+            Err(Error::MissingPosition { index: self.pos })
+        }
     }
-
-    // // 回退到上一个 token。此方法会将指针向前移动一位。
-    // fn back(&mut self) -> Option<&Token> {
-    //     self.pos -= 1;
-
-    //     self.input.get(self.pos)
-    // }
-}
-
-#[test]
-fn test_parse() {
-    use super::lexer::Lexer;
-
-    let rule = "(message.text contains_all \"bye\" and message.text contains_one {parent world}) or (message.text contains_one {see you})";
-    let input = rule.chars().collect::<Vec<_>>();
-    let mut lexer = Lexer::new(&input);
-    let mut parser = Parser::from_lexer(&mut lexer).unwrap();
-
-    parser.parse().unwrap();
 }

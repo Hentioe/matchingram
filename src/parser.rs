@@ -98,9 +98,12 @@ impl<'a> Parser<'a> {
         groups.push(self.parse_group()?);
 
         self.scan();
-        groups.append(&mut self.parse_optinal_group_list(vec![])?);
+        let mut optinal_groups = self.parse_optinal_group_list(vec![])?;
+        if optinal_groups.len() > 0 {
+            groups.append(&mut optinal_groups);
+            self.scan();
+        }
 
-        self.scan();
         if self.current_token != Some(&Token::EOF) {
             let position = self.current_position()?;
             return Err(Error::ShouldEndHere {

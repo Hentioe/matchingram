@@ -73,10 +73,18 @@ pub struct Matcher {
 }
 
 impl Matcher {
-    /// 将规则表达式解析为匹配器对象。
+    /// 解析规则表达式创建匹配器对象。
     /// 相比规则表达式匹配器对象具有更高的性能，因为不用再经历编译过程。为了提升性能，可将规则预编译为匹配器对象再执行匹配动作。
-    pub fn prase<S: Into<String>>(_rule: S) -> Result<Self> {
-        panic!("This function has not been implemented yet!")
+    pub fn from_rule<S: Into<String>>(rule: S) -> Result<Self> {
+        use super::lexer::Lexer;
+        use super::parser::Parser;
+
+        let input = rule.into().chars().collect::<Vec<_>>();
+        let mut lexer = Lexer::new(&input);
+        let parser = Parser::new(&mut lexer)?;
+        let matcher = parser.parse()?;
+
+        Ok(matcher)
     }
 
     /// 使用条件组创建匹配器对象。

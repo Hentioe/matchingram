@@ -26,14 +26,38 @@ pub use matcher::Matcher;
 use models::Message;
 use result::Result;
 
-/// Use the rule expression to match a message.
-pub fn rule_match<S: Into<String>>(_rule: S, _message: &Message) -> Result<bool> {
-    panic!("This function has not been implemented yet!")
+/// 使用规则表达式匹配消息。
+///
+/// # 例子
+/// ```
+/// use matchingram::rule_match;
+/// use matchingram::models::Message;
+///
+/// let rule = "(message.text contains_one {Hello Bye} and message.text contains_all {telegram})";
+/// let message1 = Message {
+///     text: Some(format!("Hello telegram!")),
+///     ..Default::default()
+/// };
+/// let message2 = Message {
+///     text: Some(format!("Bye telegram!")),
+///     ..Default::default()
+/// };
+///
+/// assert!(rule_match(rule, &message1)?);
+/// assert!(rule_match(rule, &message2)?);
+/// # Ok::<(), matchingram::Error>(())
+/// ```
+pub fn rule_match<S: Into<String>>(rule: S, message: &Message) -> Result<bool> {
+    let mut matcher = compile_rule(rule)?;
+
+    matcher_match(&mut matcher, message)
 }
 
-/// Use the matcher to match a message.
-pub fn matcher_match(_matcher: &Matcher, _message: &Message) -> Result<bool> {
-    panic!("This function has not been implemented yet!")
+/// 使用匹配器对象匹配消息。
+///
+/// 通过 [`compile_rule`](fn.compile_rule.html) 函数编译规则得到匹配器。
+pub fn matcher_match(matcher: &mut Matcher, message: &Message) -> Result<bool> {
+    matcher.match_message(message)
 }
 
 /// Use the matcher to match a json data.
@@ -46,8 +70,9 @@ pub fn rule_match_json<S1: Into<String>, S2: Into<String>>(_rule: S1, _json: S2)
     panic!("This function has not been implemented yet!")
 }
 
-/// Compile a string rule expression into a matcher.
-/// For details, please refer to [`Matcher::prase`](struct.Matcher.html#method.prase) function.
+/// 将字符串表达式规则编译为匹配器对象。
+///
+/// 详情请参照 [`Matcher::from_rule`](struct.Matcher.html#method.from_rule) 函数。
 pub fn compile_rule<S: Into<String>>(rule: S) -> Result<Matcher> {
-    Matcher::prase(rule)
+    Matcher::from_rule(rule)
 }

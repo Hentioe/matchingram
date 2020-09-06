@@ -1,16 +1,22 @@
-//! Similar to Cloudflare's firewall rules,
-//! this library uses specific rules to match Telegram messages.
-//! Including keywords, message types, language codes,
-//! etc. The conditions in the rules have an `and` or `or` relationship.
+//! Similar to Cloudflare's firewall rules, but used for matching Telegram messages.
 //!
-//! Cloudflare 防火墙规则分析：每一个条件由“字段” + “运算符” + “值” 构成。条件和条件之间可具备 `and` 或 `or` 的关系，不能嵌套。
-//! 字段通过点（`.`）进行分类。运算符使用 snake_case 风格命名。多值使用大括号（`{}`）包裹以及空格分隔，单值使用引号（`""`）包裹。
-//! 相邻的具有 `and` 关系的条件会被归纳到同一个括号中，但相邻的 `or` 关系的条件之间彼此独立。
+//! # Cloudflare 防火墙规则分析
+//! 规则可视作多个“条件组”的集合。一般的条件由“字段” + “运算符” + “值” 构成，条件可具备 `and` 或 `or` 关系，不能嵌套。
+//!
+//! * 字段由多个单词组合而成，通过点（`.`）连接。运算符则使用 snake_case 的风格命名。
+//! * 字符串值使用双引号（`""`）包裹，数字值不需要引号。这里仅仅指的单个值。
+//! * 多值以大括号（`{}`）包裹多个单值，并以空格间隔。多值即值的列表。
+//! * 相邻的具有 `and` 关系的条件会被归纳到同一个括号中，但相邻的 `or` 关系的条件之间彼此独立。
+//!
 //! 一个具体的例子：
 //! ```text
-//! (ip.src in {1.1.1.1 192.168.1.1} and http.request.uri.query contains "page") or (ip.geoip.country eq "AF") or (http.request.method eq "POST")
+//! (ip.src in {1.1.1.1 192.168.1.1} and http.request.method in {"GET" "POST"}) or (ip.geoip.country eq "AF") or (http.request.version eq "HTTP/1.1")
 //! ```
-//! 本库所设计的规则表达式的风格与之完全一致。
+//! # 特殊情况：
+//! 1. 在一般条件的三元组构成上，前置一个 `not` 表示取反（此时条件构成形式变为四个“部分”）。
+//! 1. 不具有运算符和值的条件直接使用字段构成，前置 `not` 也可取反。
+//!
+//! 本库所设计的规则表达式的风格将尽可能与之一致。**注意**：目前没有支持以上两个特殊情况。
 
 pub mod error;
 pub mod lexer;

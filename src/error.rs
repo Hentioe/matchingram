@@ -39,6 +39,8 @@ pub enum Error {
     /// 缺失值。
     #[error("missing value from column {column:?}")]
     MissingValue { column: usize },
+    #[error("missing quote from column {column:?}")]
+    MissingQuote { column: usize },
     /// 应该是引号。
     #[error("should be `\"` from column: {column:?}")]
     ShouldQuoteHere { column: usize },

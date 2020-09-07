@@ -64,8 +64,13 @@ pub enum Token {
     CloseBrace, // }
     /// 引号。
     Quote, // "
+    #[deprecated]
     /// 值。
-    Value, // string
+    Value, //
+    /// 文字值。
+    Letter,
+    /// 十进制数字值。
+    Decimal,
     /// and 关键字。
     And, // and
     /// or 关键字。
@@ -91,6 +96,8 @@ pub struct Lexer<'a> {
     tokens: Vec<Token>,
     // 位置序列。
     positions: Vec<Position>,
+    // 是否处在引号内部。
+    is_inside_quote: bool,
 }
 
 #[derive(Debug)]
@@ -108,6 +115,7 @@ impl<'a> Lexer<'a> {
             current_char: input.get(0),
             tokens: vec![],
             positions: vec![],
+            is_inside_quote: false,
         }
     }
 
@@ -124,66 +132,51 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) -> Result<()> {
         while self.current_char.is_some() {
             self.skip_white_space();
-            if let Some(current_char) = self.current_char {
-                match current_char {
+            if let Some(cc) = self.current_char {
+                match cc {
                     '(' => {
                         self.push_token(Token::OpenParenthesis)?;
-                        self.scan();
-                        self.skip_white_space();
-                        if !self.tokenize_field()? {
+                        if self.skip_white_space() == 0 {
+                            self.scan();
+                        }
+                        if !self.scan_field()? {
                             return Err(Error::MissingField {
                                 column: self.pos + 1,
                             });
                         }
-                        self.skip_white_space();
-                        if !self.tokenize_operator() {
+                        self.scan();
+                        if self.skip_white_space() == 0 {
+                            self.scan();
+                        }
+                        if !self.scan_operator()? {
                             return Err(Error::MissingOperator {
                                 column: self.pos + 1,
                             });
                         }
                     }
                     ')' => self.push_token(Token::CloseParenthesis)?,
-                    '{' => {
-                        self.push_token(Token::OpenBrace)?;
-                        self.tokenize_value(Token::CloseBrace);
-                    }
+                    '{' => self.push_token(Token::OpenBrace)?,
                     '}' => self.push_token(Token::CloseBrace)?,
                     '"' => {
+                        self.is_inside_quote = !self.is_inside_quote;
                         self.push_token(Token::Quote)?;
-                        self.tokenize_value(Token::Quote);
-                    }
-                    'o' => {
-                        if !self.tokenize_or()? {
-                            return Err(Error::ParseFailed {
-                                column: self.pos + 1,
-                            });
-                        }
-                    }
-                    'a' => {
-                        if self.tokenize_and()? {
-                            self.scan();
-                            self.skip_white_space();
-                            if !self.tokenize_field()? {
-                                return Err(Error::MissingField {
+                        if self.is_inside_quote {
+                            if self.skip_white_space() == 0 {
+                                self.scan();
+                            }
+                            if !self.scan_letter()? {
+                                return Err(Error::MissingQuote {
                                     column: self.pos + 1,
                                 });
                             }
-                            self.skip_white_space();
-                            if !self.tokenize_operator() {
-                                return Err(Error::MissingOperator {
-                                    column: self.pos + 1,
-                                });
-                            }
-                        } else {
-                            return Err(Error::ParseFailed {
-                                column: self.pos + 1,
-                            });
                         }
                     }
                     _ => {
-                        return Err(Error::ParseFailed {
-                            column: self.pos + 1,
-                        });
+                        if !self.scan_keywords()? && !self.scan_decimal()? {
+                            return Err(Error::ParseFailed {
+                                column: self.pos + 1,
+                            });
+                        }
                     }
                 }
 
@@ -194,6 +187,116 @@ impl<'a> Lexer<'a> {
         self.push_token(Token::EOF)?;
 
         Ok(())
+    }
+
+    // 扫描关键字。
+    fn scan_keywords(&mut self) -> Result<bool> {
+        if let Some(cc) = self.current_char {
+            match cc {
+                'a' => {
+                    if self.tokenize_and()? {
+                        self.scan();
+                        if self.skip_white_space() == 0 {
+                            self.scan();
+                        }
+                        if !self.scan_field()? {
+                            return Err(Error::MissingField {
+                                column: self.pos + 1,
+                            });
+                        }
+                        self.scan();
+                        if self.skip_white_space() == 0 {
+                            self.scan();
+                        }
+                        if !self.scan_operator()? {
+                            return Err(Error::MissingOperator {
+                                column: self.pos + 1,
+                            });
+                        }
+
+                        Ok(true)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                'o' => self.tokenize_or(),
+                'n' => self.tokenize_not(),
+                _ => Ok(false),
+            }
+        } else {
+            Ok(false)
+        }
+    }
+
+    // 扫描数字。
+    fn scan_decimal(&mut self) -> Result<bool> {
+        let begin_pos = self.pos;
+        let mut end_pos = begin_pos;
+
+        while self.at_char(end_pos).is_decimal() {
+            end_pos += 1;
+        }
+
+        let end_char = self.at_char(end_pos);
+        let is_decimal = end_pos > begin_pos
+            // 检查是否合法结束
+            && match end_char {
+                Some(&' ') => true,
+                Some(&'\n') => true,
+                Some(&'}') => true,
+                Some(&')') => true,
+                _ => false,
+            };
+
+        if is_decimal {
+            self.scan_at(end_pos - 1);
+            self.push_token_position(
+                Token::Decimal,
+                Position {
+                    begin: begin_pos,
+                    end: end_pos,
+                },
+            );
+
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    // 扫描字面值（字符串）
+    fn scan_letter(&mut self) -> Result<bool> {
+        // 如果不在引号内部，则不扫描。
+        if !self.is_inside_quote {
+            return Ok(false);
+        }
+
+        let begin_pos = self.pos;
+        let mut end_pos = begin_pos;
+        let mut separator = self.at_char(end_pos);
+        // 如果没有被双引号或换行截断，继续扫描
+        while separator.is_some() && separator != Some(&'"') && separator != Some(&'\n') {
+            end_pos += 1;
+            separator = self.at_char(end_pos);
+        }
+
+        // 合法结束检查条件：以双引号截断（而不是换行）
+        let is_letter = end_pos > begin_pos && separator == Some(&'"');
+
+        if is_letter {
+            self.scan_at(end_pos - 1);
+            self.push_token_position(
+                Token::Letter,
+                Position {
+                    begin: begin_pos,
+                    end: end_pos,
+                },
+            );
+
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 
     /// 追加一个 Token。
@@ -230,8 +333,8 @@ impl<'a> Lexer<'a> {
                 end: self.pos + 1,
             },
             Not => Position {
-                begin: self.pos - 3,
-                end: self.pos,
+                begin: self.pos - 2,
+                end: self.pos + 1,
             },
             EOF => Position {
                 begin: self.pos,
@@ -250,12 +353,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn tokenize_not(&mut self) -> Result<bool> {
-        if self.at_char(self.pos) == Some(&'n')
-            && self.at_char(self.pos + 1) == Some(&'o')
+        if self.at_char(self.pos + 1) == Some(&'o')
             && self.at_char(self.pos + 2) == Some(&'t')
             && self.at_char(self.pos + 3).is_white_space()
         {
-            self.scan_at(self.pos + 3);
+            self.scan_at(self.pos + 2);
             self.push_token(Token::Not)?;
 
             Ok(true)
@@ -264,9 +366,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn tokenize_field(&mut self) -> Result<bool> {
-        if self.tokenize_not()? {
-            self.skip_white_space();
+    fn scan_field(&mut self) -> Result<bool> {
+        if self.current_char == Some(&'n') && self.tokenize_not()? {
+            self.scan();
+            if self.skip_white_space() == 0 {
+                self.scan();
+            }
         }
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
@@ -291,13 +396,13 @@ impl<'a> Lexer<'a> {
                     end: cur_pos,
                 },
             );
-            self.scan_at(cur_pos);
+            self.scan_at(cur_pos - 1);
         }
 
-        return Ok(is_field);
+        Ok(is_field)
     }
 
-    fn tokenize_operator(&mut self) -> bool {
+    fn scan_operator(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
         let mut next_char = self.at_char(cur_pos);
@@ -321,54 +426,14 @@ impl<'a> Lexer<'a> {
                     end: cur_pos,
                 },
             );
-            self.scan_at(cur_pos);
-        }
-
-        return is_operator;
-    }
-
-    fn tokenize_value(&mut self, end_token: Token) -> bool {
-        let begin_pos = self.pos + 1;
-        let end_char = match end_token {
-            Token::CloseBrace => '}',
-            // 如果上上个是值，表示上一个引号是结束引号
-            Token::Quote => match self.tokens.get(self.tokens.len() - 2) {
-                Some(Token::Value) => return false,
-                _ => '"',
-            },
-            _ => return false,
-        };
-
-        let mut cur_pos = begin_pos;
-        let mut next_char = self.at_char(cur_pos);
-
-        while next_char.is_some() {
-            if next_char == Some(&end_char) {
-                break;
-            }
-
-            cur_pos += 1;
-            next_char = self.at_char(cur_pos);
-        }
-
-        let is_value = cur_pos > begin_pos;
-
-        if is_value {
-            self.push_token_position(
-                Token::Value,
-                Position {
-                    begin: begin_pos,
-                    end: cur_pos,
-                },
-            );
             self.scan_at(cur_pos - 1);
         }
 
-        return is_value;
+        Ok(is_operator)
     }
 
     fn tokenize_or(&mut self) -> Result<bool> {
-        if self.at_char(self.pos + 1) == Some(&'r') && self.at_char(self.pos + 2) == Some(&' ') {
+        if self.at_char(self.pos + 1) == Some(&'r') && self.at_char(self.pos + 2).is_white_space() {
             self.scan_at(self.pos + 1);
             self.push_token(Token::Or)?;
 
@@ -487,6 +552,10 @@ trait IsWhiteSpace {
     fn is_white_space(self) -> bool;
 }
 
+trait IsDecimal {
+    fn is_decimal(self) -> bool;
+}
+
 impl IsWhiteSpace for Option<&char> {
     fn is_white_space(self) -> bool {
         if let Some(c) = self {
@@ -497,11 +566,21 @@ impl IsWhiteSpace for Option<&char> {
     }
 }
 
+impl IsDecimal for Option<&char> {
+    fn is_decimal(self) -> bool {
+        if let Some(c) = self {
+            c.is_digit(10)
+        } else {
+            false
+        }
+    }
+}
+
 #[test]
-fn test_not_token() {
+fn test_lexer() {
     use Token::*;
 
-    let rule = "(not message.text contains_one {say: 说：})";
+    let rule = r#"(not message.text contains_one {"say:" "说："} and message.text.size gt 1234567890) or (message.text eq "/say")"#;
     let input = rule.chars().collect::<Vec<_>>();
 
     let mut lexer = Lexer::new(&input);
@@ -513,8 +592,25 @@ fn test_not_token() {
         (Field, String::from("message.text")),
         (Operator, String::from("contains_one")),
         (OpenBrace, String::from("{")),
-        (Value, String::from("say: 说：")),
+        (Quote, String::from("\"")),
+        (Letter, String::from("say:")),
+        (Quote, String::from("\"")),
+        (Quote, String::from("\"")),
+        (Letter, String::from("说：")),
+        (Quote, String::from("\"")),
         (CloseBrace, String::from("}")),
+        (And, String::from("and")),
+        (Field, String::from("message.text.size")),
+        (Operator, String::from("gt")),
+        (Decimal, String::from("1234567890")),
+        (CloseParenthesis, String::from(")")),
+        (Or, String::from("or")),
+        (OpenParenthesis, String::from("(")),
+        (Field, String::from("message.text")),
+        (Operator, String::from("eq")),
+        (Quote, String::from("\"")),
+        (Letter, String::from("/say")),
+        (Quote, String::from("\"")),
         (CloseParenthesis, String::from(")")),
         (EOF, String::from("")),
     ];

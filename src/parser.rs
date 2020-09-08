@@ -186,7 +186,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_cont(&mut self) -> Result<Cont> {
-        let is_negate = if self.ct == Some(&Token::Not) {
+        let is_negative = if self.ct == Some(&Token::Not) {
             self.scan();
 
             true
@@ -214,7 +214,7 @@ impl<'a> Parser<'a> {
         self.scan();
         let value = self.parse_value()?;
 
-        Ok(Cont::new(is_negate, field, operator, value)?)
+        Ok(Cont::new(is_negative, field, operator, value)?)
     }
 
     fn parse_value(&mut self) -> Result<Vec<Value>> {

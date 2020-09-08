@@ -26,20 +26,20 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_ma
 /// let groups = vec![
 ///     vec![
 ///         Cont {
-///             is_negate: false,
+///             is_negative: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
 ///             value: vec![Value::from_str("柬埔寨"), Value::from_str("东南亚")],
 ///         },
 ///         Cont {
-///             is_negate: false,
+///             is_negative: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
 ///             value: vec![Value::from_str("菠菜"), Value::from_str("博彩")],
 ///         },
 ///     ],
 ///     vec![Cont {
-///         is_negate: false,
+///         is_negative: false,
 ///         field: Field::MessageText,
 ///         operator: Operator::ContainsAll,
 ///         value: vec![Value::from_str("承接"), Value::from_str("广告")],
@@ -117,7 +117,7 @@ pub enum Value {
 #[derive(Debug)]
 pub struct Cont {
     /// 是否取反。
-    pub is_negate: bool,
+    pub is_negative: bool,
     /// 字段。
     pub field: Field,
     /// 运算符。
@@ -190,7 +190,7 @@ impl Value {
 impl Cont {
     /// 从字符串数据中构建条件。
     pub fn new(
-        is_negate: bool,
+        is_negative: bool,
         field_s: String,
         operator_s: String,
         value: Vec<Value>,
@@ -219,7 +219,7 @@ impl Cont {
         }
 
         Ok(Cont {
-            is_negate,
+            is_negative,
             field,
             operator,
             value,
@@ -254,19 +254,9 @@ impl Matcher {
     }
 }
 
-macro_rules! negating_wrap {
-    ($cont:ident, $result:ident) => {
-        if $cont.is_negate {
-            !$result
-        } else {
-            $result
-        }
-    };
-}
-
 impl Cont {
     pub fn match_message(&self, message: &Message) -> Result<bool> {
-        match self.field {
+        let r = match self.field {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
                     match self.operator {
@@ -279,7 +269,7 @@ impl Cont {
                                 }
                             }
 
-                            Ok(negating_wrap!(self, result))
+                            Ok(result)
                         }
                         Operator::ContainsAll => {
                             let mut result = true;
@@ -290,12 +280,12 @@ impl Cont {
                                 }
                             }
 
-                            Ok(negating_wrap!(self, result))
+                            Ok(result)
                         }
                         Operator::Eq => {
                             let result = text.eq(&self.value.as_string());
 
-                            Ok(negating_wrap!(self, result))
+                            Ok(result)
                         }
                         _ => Err(Error::UnsupportedOperator {
                             field: self.field.to_string(),
@@ -310,6 +300,16 @@ impl Cont {
                 // TODO：有待实现。
                 Ok(false)
             }
+        };
+
+        if let Ok(no_negative_result) = r {
+            if self.is_negative {
+                Ok(!no_negative_result)
+            } else {
+                Ok(no_negative_result)
+            }
+        } else {
+            r
         }
     }
 }

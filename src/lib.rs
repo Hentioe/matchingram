@@ -70,6 +70,7 @@ pub fn matcher_match(matcher: &mut Matcher, message: &Message) -> Result<bool> {
 }
 
 /// 使用匹配器对象匹配消息的 JSON 数据。
+#[cfg(feature = "json")]
 pub fn matcher_match_json<S: Into<String>>(matcher: &mut Matcher, json_data: S) -> Result<bool> {
     let message: Message = serde_json::from_str(&json_data.into())?;
 
@@ -90,6 +91,7 @@ pub fn matcher_match_json<S: Into<String>>(matcher: &mut Matcher, json_data: S) 
 /// assert!(rule_match_json(rule, message2)?);
 /// # Ok::<(), matchingram::Error>(())
 /// ```
+#[cfg(feature = "json")]
 pub fn rule_match_json<S1: Into<String>, S2: Into<String>>(rule: S1, json: S2) -> Result<bool> {
     let mut matcher = compile_rule(rule)?;
 

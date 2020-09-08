@@ -6,7 +6,7 @@
 //! use matchingram::lexer::Lexer;
 //! use matchingram::lexer::Token::*;
 //!
-//! let rule = "(message.text contains_all \"bye\" and message.text contains_one {parent world}) or (message.text contains_one {see you})";
+//! let rule = r#"(message.text contains_all "bye" and message.text contains_one {"parent" "world"}) or (message.text contains_one {"see" "you"})"#;
 //! let input = rule.chars().collect::<Vec<_>>();
 //!
 //! let mut lexer = Lexer::new(&input);
@@ -17,13 +17,18 @@
 //!     (Field, String::from("message.text")),
 //!     (Operator, String::from("contains_all")),
 //!     (Quote, String::from("\"")),
-//!     (Value, String::from("bye")),
+//!     (Letter, String::from("bye")),
 //!     (Quote, String::from("\"")),
 //!     (And, String::from("and")),
 //!     (Field, String::from("message.text")),
 //!     (Operator, String::from("contains_one")),
 //!     (OpenBrace, String::from("{")),
-//!     (Value, String::from("parent world")),
+//!     (Quote, String::from("\"")),
+//!     (Letter, String::from("parent")),
+//!     (Quote, String::from("\"")),
+//!     (Quote, String::from("\"")),
+//!     (Letter, String::from("world")),
+//!     (Quote, String::from("\"")),
 //!     (CloseBrace, String::from("}")),
 //!     (CloseParenthesis, String::from(")")),
 //!     (Or, String::from("or")),
@@ -31,7 +36,12 @@
 //!     (Field, String::from("message.text")),
 //!     (Operator, String::from("contains_one")),
 //!     (OpenBrace, String::from("{")),
-//!     (Value, String::from("see you")),
+//!     (Quote, String::from("\"")),
+//!     (Letter, String::from("see")),
+//!     (Quote, String::from("\"")),
+//!     (Quote, String::from("\"")),
+//!     (Letter, String::from("you")),
+//!     (Quote, String::from("\"")),
 //!     (CloseBrace, String::from("}")),
 //!     (CloseParenthesis, String::from(")")),
 //!     (EOF, String::from("")),
@@ -64,9 +74,6 @@ pub enum Token {
     CloseBrace, // }
     /// 引号。
     Quote, // "
-    #[deprecated]
-    /// 值。
-    Value, //
     /// 文字值。
     Letter,
     /// 十进制数字值。
@@ -107,7 +114,7 @@ pub struct Position {
 }
 
 impl<'a> Lexer<'a> {
-    /// 以字符列表作为输入创建分析器。
+    /// 以字符序列作为输入创建分析器。
     pub fn new(input: &'a Input) -> Self {
         Self {
             input: input,
@@ -129,6 +136,7 @@ impl<'a> Lexer<'a> {
         &self.positions
     }
 
+    /// 将输入转换为 token 序列。
     pub fn tokenize(&mut self) -> Result<()> {
         while self.current_char.is_some() {
             self.skip_white_space();
@@ -299,8 +307,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// 追加一个 Token。
-    pub fn push_token(&mut self, token: Token) -> Result<()> {
+    // 追加一个 Token。
+    fn push_token(&mut self, token: Token) -> Result<()> {
         use Token::*;
 
         let position = match &token {

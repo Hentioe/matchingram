@@ -6,7 +6,9 @@
 //! 条件组 -> <(> 条件 可选条件列表 <)>
 //! 条件 -> 未取反条件 | <not> 未取反条件
 //! 未取反条件 -> <字段> <运算符> 值表示
-//! 值表示 -> <{> <值> <}> | <"> <值> <">
+//! 值表示 -> 单值表示 | 多值表示
+//! 多值表示 -> <{> 单值表示 单值表示 ... <}>
+//! 单值表示 -> <"> <letter> <"> | <decimal>
 //! 可选条件列表 -> <and> 条件 可选条件列表 | <空>
 //! 可选条件组列表 -> <or> 条件组 可选条件组列表 | <空>
 //! ```
@@ -20,7 +22,7 @@
 //! use matchingram::parser::Parser;
 //!
 //! // 准备规则，用于匹配东南亚博彩或广告业务宣传。
-//! let rule = "(message.text contains_one {柬埔寨 东南亚} and message.text contains_one {菠菜 博彩}) or (message.text contains_all {承接 广告})";
+//! let rule = r#"(message.text contains_one {"柬埔寨" "东南亚"} and message.text contains_one {"菠菜" "博彩"}) or (message.text contains_all {"承接" "广告"})"#;
 //! // 解析规则并得到 matcher 对象。
 //! let input = rule.chars().collect::<Vec<_>>();
 //! let mut lexer = Lexer::new(&input);
@@ -53,25 +55,29 @@
 
 use super::error::Error;
 use super::lexer::{Lexer, Position, Token};
-use super::matcher::{Cont, Groups as ContGroups, Matcher};
+use super::matcher::{Cont, Groups as ContGroups, Matcher, Value};
 use super::result::Result;
+
+use derivative::Derivative;
 
 type Input = Vec<Token>;
 
 /// 文法分析器。
 /// 解析 [`Lexer::Token`](../lexer/enum.Token.html) 序列生成 [`Matcher`](../matcher/struct.Matcher.html) 对象。
-#[derive(Debug)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Parser<'a> {
     /// 输入（token 序列）。
     pub input: &'a Input,
     /// 数据序列。
     pub data: Vec<&'a [char]>,
     /// 位置序列。
+    #[derivative(Debug = "ignore")]
     positions: &'a Vec<Position>,
-    // 当前指针。
+    // 当前的指针位置。
     pos: usize,
-    // 当前 token。
-    pub current_token: Option<&'a Token>,
+    // 当前的 token（current token）。
+    pub ct: Option<&'a Token>,
 }
 
 impl<'a> Parser<'a> {
@@ -88,7 +94,7 @@ impl<'a> Parser<'a> {
             data: lexer.data(),
             positions: lexer.positions(),
             pos: 0,
-            current_token: input.get(0),
+            ct: input.get(0),
         })
     }
 
@@ -105,7 +111,7 @@ impl<'a> Parser<'a> {
             self.scan();
         }
 
-        if self.current_token != Some(&Token::EOF) {
+        if self.ct != Some(&Token::EOF) {
             let position = self.current_position()?;
             return Err(Error::ShouldEndHere {
                 column: position.begin,
@@ -116,7 +122,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_group(&mut self) -> Result<Vec<Cont>> {
-        if self.current_token != Some(&Token::OpenParenthesis) {
+        if self.ct != Some(&Token::OpenParenthesis) {
             let position = self.current_position()?;
             return Err(Error::ShouldOpenParenthesisHere {
                 column: position.begin,
@@ -136,8 +142,9 @@ impl<'a> Parser<'a> {
             conts.append(&mut optinal_conts);
         }
 
-        if self.current_token != Some(&Token::CloseParenthesis) {
+        if self.ct != Some(&Token::CloseParenthesis) {
             let position = self.current_position()?;
+
             return Err(Error::ShouldCloseParenthesisHere {
                 column: position.begin,
             });
@@ -147,7 +154,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_optinal_cont_list(&mut self, mut conts: Vec<Cont>) -> Result<Vec<Cont>> {
-        if self.current_token != Some(&Token::And) {
+        if self.ct != Some(&Token::And) {
             return Ok(conts);
         }
 
@@ -158,7 +165,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_optinal_group_list(&mut self, mut groups: ContGroups) -> Result<ContGroups> {
-        if self.current_token != Some(&Token::Or) {
+        if self.ct != Some(&Token::Or) {
             return Ok(groups);
         }
 
@@ -169,7 +176,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_cont(&mut self) -> Result<Cont> {
-        let is_negate = if self.current_token == Some(&Token::Not) {
+        let is_negate = if self.ct == Some(&Token::Not) {
             self.scan();
 
             true
@@ -177,7 +184,7 @@ impl<'a> Parser<'a> {
             false
         };
 
-        if self.current_token != Some(&Token::Field) {
+        if self.ct != Some(&Token::Field) {
             let position = self.current_position()?;
             return Err(Error::MissingField {
                 column: position.begin,
@@ -186,7 +193,7 @@ impl<'a> Parser<'a> {
         let field = self.current_data()?.iter().collect();
 
         self.scan();
-        if self.current_token != Some(&Token::Operator) {
+        if self.ct != Some(&Token::Operator) {
             let position = self.current_position()?;
             return Err(Error::MissingOperator {
                 column: position.begin,
@@ -200,53 +207,56 @@ impl<'a> Parser<'a> {
         Ok(Cont::new(is_negate, field, operator, value)?)
     }
 
-    fn parse_value(&mut self) -> Result<String> {
-        match self.current_token {
-            Some(Token::Quote) => {
+    fn parse_value(&mut self) -> Result<Vec<Value>> {
+        // 匹配多值
+        if self.ct == Some(&Token::OpenBrace) {
+            let mut value = vec![];
+
+            self.scan();
+            while self.ct != Some(&Token::CloseBrace) {
+                value.push(self.prase_single_value()?);
                 self.scan();
-                if self.current_token != Some(&Token::Value) {
-                    let position = self.current_position()?;
-                    return Err(Error::MissingValue {
-                        column: position.begin,
-                    });
-                }
-                self.scan();
-                if self.current_token != Some(&Token::Quote) {
-                    let position = self.current_position()?;
-                    return Err(Error::ShouldQuoteHere {
-                        column: position.begin,
-                    });
-                }
             }
 
-            Some(Token::OpenBrace) => {
-                self.scan();
-                if self.current_token != Some(&Token::Value) {
-                    let position = self.current_position()?;
-                    return Err(Error::MissingValue {
-                        column: position.begin,
-                    });
-                }
-                self.scan();
-                if self.current_token != Some(&Token::CloseBrace) {
-                    let position = self.current_position()?;
-                    return Err(Error::ShouldCloseBraceHere {
-                        column: position.begin,
-                    });
-                }
-            }
+            Ok(value)
+        } else {
+            let value = self.prase_single_value()?;
 
-            _ => {
-                let position = self.current_position()?;
-                return Err(Error::ShouldOpenBraceOrQuote {
-                    column: position.begin,
-                });
-            }
+            Ok(vec![value])
+        }
+    }
+
+    fn prase_single_value(&mut self) -> Result<Value> {
+        let position = self.current_position()?;
+
+        if self.ct == Some(&Token::Decimal) {
+            let value_data = self.at_data(self.pos)?;
+            let value_decimal =
+                i64::from_str_radix(value_data.iter().collect::<String>().as_str(), 10).map_err(
+                    |_| Error::DecimalParseFailed {
+                        column: position.begin,
+                    },
+                )?;
+
+            self.scan();
+
+            return Ok(Value::Decimal(value_decimal));
         }
 
-        let value = self.at_data(self.pos - 1)?.iter().collect();
+        if self.ct == Some(&Token::Quote)
+            && self.input.get(self.pos + 1) == Some(&Token::Letter)
+            && self.input.get(self.pos + 2) == Some(&Token::Quote)
+        {
+            let value_data = self.at_data(self.pos + 1)?;
 
-        Ok(value)
+            self.scan_at(self.pos + 2);
+
+            return Ok(Value::Letter(value_data.iter().collect()));
+        }
+
+        return Err(Error::ShouldValueHere {
+            column: position.begin,
+        });
     }
 
     // 当前位置的 token 数据引用。
@@ -262,12 +272,20 @@ impl<'a> Parser<'a> {
             .ok_or(Error::MissingTokenData { index: self.pos })
     }
 
-    // 扫描下一个 token。此方法会将指针向后移动一位。
+    // 扫描下一个 token，并向后移动一个指针位置。
     fn scan(&mut self) -> Option<&Token> {
         self.pos += 1;
-        self.current_token = self.input.get(self.pos);
+        self.ct = self.input.get(self.pos);
 
-        self.current_token
+        self.ct
+    }
+
+    // 扫描指定位置的 token，并移动指针到该位置。
+    fn scan_at(&mut self, pos: usize) -> Option<&Token> {
+        self.pos = pos;
+        self.ct = self.input.get(self.pos);
+
+        self.ct
     }
 
     // 当前 token 的位置信息。
@@ -281,10 +299,10 @@ impl<'a> Parser<'a> {
 }
 
 #[test]
-fn test_not_cont() {
+fn test_parser() {
     use super::models::Message;
 
-    let rule = "(not message.text contains_one {say: 说：})";
+    let rule = r#"(not message.text contains_one {"say:" "说："}) or (message.text contains_one {110 120})"#;
     let input = rule.chars().collect::<Vec<_>>();
 
     let mut lexer = Lexer::new(&input);

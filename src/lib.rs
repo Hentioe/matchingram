@@ -18,7 +18,7 @@
 //!
 //! 本库所设计的规则表达式的风格将尽可能与之一致，但这并不表示字段或运算符是兼容的。
 //! # **注意**
-//! 1. 目前没有支持**特殊情况一**，因为是否会采取相同设计还不确定。
+//! - 目前没有支持**特殊情况一**，因为是否会采取相同设计还没有决定。
 
 pub mod error;
 pub mod lexer;
@@ -41,7 +41,7 @@ use result::Result;
 /// use matchingram::rule_match;
 /// use matchingram::models::Message;
 ///
-/// let rule = "(message.text contains_one {Hello Bye} and message.text contains_all {telegram})";
+/// let rule = r#"(message.text contains_one {"Hello" "Bye"} and message.text contains_all {"telegram"})"#;
 /// let message1 = Message {
 ///     text: Some(format!("Hello telegram!")),
 ///     ..Default::default()

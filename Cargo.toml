@@ -11,3 +11,4 @@ thiserror = "1.0"
 phf = { version = "0.8", features = ["macros"] }
 strum = "0.19"
 strum_macros = "0.19"
+derivative = "2.1.1"

@@ -47,6 +47,9 @@ pub enum Error {
     /// 应该是关闭的大括号。
     #[error("should be `}}` from column: {column:?}")]
     ShouldCloseBraceHere { column: usize },
+    /// 应该是值。
+    #[error("should be values from column: {column:?}")]
+    ShouldValueHere { column: usize },
     /// 应该是打开的大括号或引号。
     #[error("should be `{{` or `\"` from column: {column:?}")]
     ShouldOpenBraceOrQuote { column: usize },
@@ -60,8 +63,11 @@ pub enum Error {
     #[error("token `{token:?}` is missing position information, the {position:?}th")]
     MissingTokenPosition { position: usize, token: Token },
     /// 缺失数据。
-    #[error("the {index:?}th token data is missing.")]
+    #[error("the {index:?}th token data is missing")]
     MissingTokenData { index: usize },
+    /// 数字转换出错。
+    #[error("error in conversion of numbers starting in column {column:?}")]
+    DecimalParseFailed { column: usize },
     /// 解析失败。
     #[error("failed to parse from column {column:?}")]
     ParseFailed { column: usize },

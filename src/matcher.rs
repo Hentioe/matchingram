@@ -10,8 +10,8 @@ use super::result::Result;
 
 pub type Groups = Vec<Vec<Cont>>;
 
-pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])> = phf_map! {
-    "message.text" => (Field::MessageText, &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll])
+pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
+    "message.text" =>  &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll]
 };
 
 /// 匹配器。一般作为表达式的编译目标。
@@ -29,20 +29,20 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])>
 ///             is_negate: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
-///             value: vec!["柬埔寨".to_owned(), "东南亚".to_owned()],
+///             value: vec![Value::from_str("柬埔寨"), Value::from_str("东南亚")],
 ///         },
 ///         Cont {
 ///             is_negate: false,
 ///             field: Field::MessageText,
 ///             operator: Operator::ContainsOne,
-///             value: vec!["菠菜".to_owned(), "博彩".to_owned()],
+///             value: vec![Value::from_str("菠菜"), Value::from_str("博彩")],
 ///         },
 ///     ],
 ///     vec![Cont {
 ///         is_negate: false,
 ///         field: Field::MessageText,
 ///         operator: Operator::ContainsAll,
-///         value: vec!["承接".to_owned(), "广告".to_owned()],
+///         value: vec![Value::from_str("承接"), Value::from_str("广告")],
 ///     }],
 /// ];
 /// let mut matcher = Matcher::new(groups);
@@ -72,7 +72,7 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, (Field, &'static [Operator])>
 /// ```
 /// 它对应的字符串表达式为：
 /// ```text
-/// (message.text contains_one {柬埔寨 东南亚} and message.text contains_one {菠菜 博彩}) or (message.text contains_all {承接 广告})
+/// (message.text contains_one {"柬埔寨" "东南亚"} and message.text contains_one {"菠菜" "博彩"}) or (message.text contains_all {"承接" "广告"})
 /// ```
 /// **注意**：匹配器中的所有条件之间都没有显式的关系存在，因为匹配器中每一个独立的组之间一定是 `or` 关系，组内的条件之间一定是 `and` 关系。即：已存在隐式的关系表达。
 #[derive(Debug, Default)]
@@ -107,6 +107,12 @@ impl Matcher {
     }
 }
 
+#[derive(Debug)]
+pub enum Value {
+    Decimal(i64),
+    Letter(String),
+}
+
 /// 单个条件。
 #[derive(Debug)]
 pub struct Cont {
@@ -117,7 +123,7 @@ pub struct Cont {
     /// 运算符。
     pub operator: Operator,
     /// 值。
-    pub value: Vec<String>,
+    pub value: Vec<Value>,
 }
 
 /// 条件字段。
@@ -126,6 +132,9 @@ pub enum Field {
     /// 消息文本
     #[strum(serialize = "message.text")]
     MessageText,
+    /// 消息文本大小
+    #[strum(serialize = "message.text.size")]
+    MessageTextSize,
 }
 
 /// 条件操作符。
@@ -134,10 +143,48 @@ pub enum Field {
 pub enum Operator {
     // 等于。
     Eq,
+    // 大于
+    Gt,
+    // 小于
+    Lt,
+    // 大于或等于
+    Ge,
+    // 小于或等于
+    Le,
     /// 包含其一。
     ContainsOne,
     /// 包含全部。
     ContainsAll,
+}
+
+trait AsString {
+    fn as_string(&self) -> String;
+}
+
+impl AsString for Value {
+    fn as_string(&self) -> String {
+        use Value::*;
+
+        match self {
+            Letter(v) => v.clone(),
+            Decimal(v) => v.to_string(),
+        }
+    }
+}
+
+impl AsString for Vec<Value> {
+    fn as_string(&self) -> String {
+        self.into_iter()
+            .map(|v| v.as_string())
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+}
+
+impl Value {
+    pub fn from_str(value_s: &str) -> Self {
+        Value::Letter(value_s.to_owned())
+    }
 }
 
 impl Cont {
@@ -146,19 +193,22 @@ impl Cont {
         is_negate: bool,
         field_s: String,
         operator_s: String,
-        value_s: String,
+        value: Vec<Value>,
     ) -> Result<Self> {
         let operator =
             Operator::from_str(operator_s.as_str()).map_err(|_| Error::UnknownOperator {
                 operator: operator_s.clone(),
             })?;
 
-        let (field, operators) =
-            FIELD_OPERATORS
-                .get(field_s.as_str())
-                .ok_or(Error::UnknownField {
-                    field: field_s.clone(),
-                })?;
+        let field = Field::from_str(field_s.as_str()).map_err(|_| Error::UnknownField {
+            field: field_s.clone(),
+        })?;
+
+        let empty_operators = &vec![];
+        let operators = FIELD_OPERATORS
+            .get(field_s.as_str())
+            .copied()
+            .unwrap_or(&empty_operators);
 
         // 检查运算符是否支持。
         if !operators.contains(&operator) {
@@ -168,16 +218,10 @@ impl Cont {
             });
         }
 
-        // 解析值。
-        let value = value_s
-            .split_whitespace()
-            .map(|v| v.to_string())
-            .collect::<Vec<_>>();
-
         Ok(Cont {
             is_negate,
-            field: *field,
-            operator: operator,
+            field,
+            operator,
             value,
         })
     }
@@ -229,7 +273,7 @@ impl Cont {
                         Operator::ContainsOne => {
                             let mut result = false;
                             for v in &self.value {
-                                if text.contains(v) {
+                                if text.contains(&v.as_string()) {
                                     result = true;
                                     break;
                                 }
@@ -240,7 +284,7 @@ impl Cont {
                         Operator::ContainsAll => {
                             let mut result = true;
                             for v in &self.value {
-                                if !text.contains(v) {
+                                if !text.contains(&v.as_string()) {
                                     result = false;
                                     break;
                                 }
@@ -249,19 +293,22 @@ impl Cont {
                             Ok(negating_wrap!(self, result))
                         }
                         Operator::Eq => {
-                            let value_s = self.value.join(" ");
-                            let result = text.eq(&value_s);
+                            let result = text.eq(&self.value.as_string());
 
                             Ok(negating_wrap!(self, result))
                         }
-                        // _ => Err(Error::UnsupportedOperator {
-                        //     field: self.field.to_string(),
-                        //     operator: self.operator.to_string(),
-                        // }),
+                        _ => Err(Error::UnsupportedOperator {
+                            field: self.field.to_string(),
+                            operator: self.operator.to_string(),
+                        }),
                     }
                 } else {
                     Ok(false)
                 }
+            }
+            Field::MessageTextSize => {
+                // TODO：有待实现。
+                Ok(false)
             }
         }
     }

@@ -71,4 +71,9 @@ pub enum Error {
     /// 解析失败。
     #[error("failed to parse from column {column:?}")]
     ParseFailed { column: usize },
+    #[error("{}", source.to_string())]
+    Json {
+        #[from]
+        source: serde_json::Error,
+    },
 }

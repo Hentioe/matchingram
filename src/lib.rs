@@ -69,14 +69,31 @@ pub fn matcher_match(matcher: &mut Matcher, message: &Message) -> Result<bool> {
     matcher.match_message(message)
 }
 
-/// Use the matcher to match a json data.
-pub fn matcher_match_json<S: Into<String>>(_matcher: &Matcher, _json: S) -> Result<bool> {
-    panic!("This function has not been implemented yet!")
+/// 使用匹配器对象匹配消息的 JSON 数据。
+pub fn matcher_match_json<S: Into<String>>(matcher: &mut Matcher, json_data: S) -> Result<bool> {
+    let message: Message = serde_json::from_str(&json_data.into())?;
+
+    matcher.match_message(&message)
 }
 
-/// Use the rule expression to match a json data.
-pub fn rule_match_json<S1: Into<String>, S2: Into<String>>(_rule: S1, _json: S2) -> Result<bool> {
-    panic!("This function has not been implemented yet!")
+/// 使用规则表达式匹配消息的 JSON 数据。
+///
+/// # 例子
+/// ```
+/// use matchingram::rule_match_json;
+///
+/// let rule = r#"(message.text contains_one {"Hello" "Bye"} and message.text contains_all {"telegram"})"#;
+/// let message1 = r#"{"text": "Hello telegram!"}"#;
+/// let message2 = r#"{"text": "Bye telegram!"}"#;
+///
+/// assert!(rule_match_json(rule, message1)?);
+/// assert!(rule_match_json(rule, message2)?);
+/// # Ok::<(), matchingram::Error>(())
+/// ```
+pub fn rule_match_json<S1: Into<String>, S2: Into<String>>(rule: S1, json: S2) -> Result<bool> {
+    let mut matcher = compile_rule(rule)?;
+
+    matcher_match_json(&mut matcher, json)
 }
 
 /// 将字符串表达式规则编译为匹配器对象。

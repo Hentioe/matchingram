@@ -1,9 +1,10 @@
 //! All types used in a Bot API message.
 
+use serde::{Deserialize, Serialize};
 use std::rc::Rc;
 
 /// This object represents a message.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Message {
     /// Sender, empty for messages sent to channels.
     pub from: Option<User>,
@@ -65,7 +66,7 @@ pub struct Message {
 }
 
 /// This object represents a Telegram user or bot.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     /// True, if this user is a bot.
     pub is_bot: bool,
@@ -80,9 +81,10 @@ pub struct User {
 }
 
 /// This object represents a chat.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Chat {
     /// Type of chat, can be either “private”, “group”, “supergroup” or “channel”.
+    #[serde(rename = "type")]
     pub type_: String,
     /// Title, for supergroups, channels and group chats.
     pub title: Option<String>,
@@ -90,7 +92,7 @@ pub struct Chat {
 
 /// This object represents one special entity in a text message.
 /// For example, hashtags, usernames, URLs, etc.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MessageEntity {
     /// Type of the entity. Can be “mention” (`@username`), “hashtag” (`#hashtag`),
     /// “cashtag” (`$USD`), “bot_command” (`/start@jobs_bot`), “url” (`https://telegram.org`),
@@ -98,6 +100,7 @@ pub struct MessageEntity {
     /// “italic” (_italic text_), “underline” (underlined text), “strikethrough” (strikethrough text),
     /// “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs),
     /// “text_mention” (for users without usernames).
+    #[serde(rename = "type")]
     pub type_: String,
     /// Offset in UTF-16 code units to the start of the entity.
     pub offset: i32,
@@ -112,7 +115,7 @@ pub struct MessageEntity {
 }
 
 /// This object represents an animation file (GIF or H.264/MPEG-4 AVC video without sound).
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Animation {
     /// Duration of the video in seconds as defined by sender.
     pub duration: i32,
@@ -125,7 +128,7 @@ pub struct Animation {
 }
 
 /// This object represents an audio file to be treated as music by the Telegram clients.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Audio {
     /// Duration of the audio in seconds as defined by sender.
     pub duration: i32,
@@ -140,7 +143,7 @@ pub struct Audio {
 }
 
 /// This object represents a general file (as opposed to photos, voice messages and audio files).
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Document {
     pub file_name: Option<String>,
     pub mime_type: Option<String>,
@@ -148,7 +151,7 @@ pub struct Document {
 }
 
 /// This object represents one size of a photo or a file / sticker thumbnail.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PhotoSize {
     pub width: i32,
     pub height: i32,
@@ -156,7 +159,7 @@ pub struct PhotoSize {
 }
 
 /// This object represents a sticker.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Sticker {
     /// True, if the sticker is animated.
     pub is_animated: bool,
@@ -167,7 +170,7 @@ pub struct Sticker {
 }
 
 /// This object represents a video file.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Video {
     pub duration: i32,
     pub mime_type: Option<String>,
@@ -175,14 +178,14 @@ pub struct Video {
 }
 
 /// This object represents a video message (available in Telegram apps as of v.4.0).
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VideoNote {
     pub duration: i32,
     pub file_size: Option<i32>,
 }
 
 /// This object represents a voice note.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Voice {
     pub duration: i32,
     pub mime_type: Option<String>,
@@ -190,21 +193,22 @@ pub struct Voice {
 }
 
 /// This object represents an animated emoji that displays a random value.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Dice {
     /// Emoji on which the dice throw animation is based.
     pub emoji: String,
 }
 
 /// This object contains information about a poll.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Poll {
     /// Poll type, currently can be “regular” or “quiz”.
+    #[serde(rename = "type")]
     pub type_: String,
 }
 
 /// This object represents a venue.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Venue {
     pub location: Location,
     pub title: String,
@@ -212,7 +216,7 @@ pub struct Venue {
 }
 
 /// This object represents a point on the map.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Location {
     pub longitude: f64,
     pub latitude: f64,

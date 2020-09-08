@@ -144,18 +144,15 @@ impl<'a> Lexer<'a> {
                 match cc {
                     '(' => {
                         self.push_token(Token::OpenParenthesis)?;
-                        if self.skip_white_space() == 0 {
-                            self.scan();
-                        }
+                        self.scan();
+                        self.skip_white_space();
                         if !self.scan_field()? {
                             return Err(Error::MissingField {
                                 column: self.pos + 1,
                             });
                         }
                         self.scan();
-                        if self.skip_white_space() == 0 {
-                            self.scan();
-                        }
+                        self.skip_white_space();
                         if !self.scan_operator()? {
                             return Err(Error::MissingOperator {
                                 column: self.pos + 1,
@@ -169,9 +166,7 @@ impl<'a> Lexer<'a> {
                         self.is_inside_quote = !self.is_inside_quote;
                         self.push_token(Token::Quote)?;
                         if self.is_inside_quote {
-                            if self.skip_white_space() == 0 {
-                                self.scan();
-                            }
+                            self.scan();
                             if !self.scan_letter()? {
                                 return Err(Error::MissingQuote {
                                     column: self.pos + 1,
@@ -204,18 +199,14 @@ impl<'a> Lexer<'a> {
                 'a' => {
                     if self.tokenize_and()? {
                         self.scan();
-                        if self.skip_white_space() == 0 {
-                            self.scan();
-                        }
+                        self.skip_white_space();
                         if !self.scan_field()? {
                             return Err(Error::MissingField {
                                 column: self.pos + 1,
                             });
                         }
                         self.scan();
-                        if self.skip_white_space() == 0 {
-                            self.scan();
-                        }
+                        self.skip_white_space();
                         if !self.scan_operator()? {
                             return Err(Error::MissingOperator {
                                 column: self.pos + 1,
@@ -248,13 +239,11 @@ impl<'a> Lexer<'a> {
         let end_char = self.at_char(end_pos);
         let is_decimal = end_pos > begin_pos
             // 检查是否合法结束
-            && match end_char {
-                Some(&' ') => true,
-                Some(&'\n') => true,
+            && (end_char.is_white_space() || match end_char {
                 Some(&'}') => true,
                 Some(&')') => true,
                 _ => false,
-            };
+            });
 
         if is_decimal {
             self.scan_at(end_pos - 1);
@@ -377,9 +366,7 @@ impl<'a> Lexer<'a> {
     fn scan_field(&mut self) -> Result<bool> {
         if self.current_char == Some(&'n') && self.tokenize_not()? {
             self.scan();
-            if self.skip_white_space() == 0 {
-                self.scan();
-            }
+            self.skip_white_space();
         }
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
@@ -454,7 +441,7 @@ impl<'a> Lexer<'a> {
     fn tokenize_and(&mut self) -> Result<bool> {
         if self.at_char(self.pos + 1) == Some(&'n')
             && self.at_char(self.pos + 2) == Some(&'d')
-            && self.at_char(self.pos + 3) == Some(&' ')
+            && self.at_char(self.pos + 3).is_white_space()
         {
             self.scan_at(self.pos + 2);
             self.push_token(Token::And)?;
@@ -488,10 +475,10 @@ impl<'a> Lexer<'a> {
 
     // 跳过空白字符。返回跳过的字符数量。
     fn skip_white_space(&mut self) -> usize {
-        let mut current_char = self.current_char;
-        let begin_pos = self.pos;
-        while current_char.is_white_space() {
-            current_char = self.scan();
+        let mut begin_pos = self.pos;
+        while self.current_char.is_white_space() {
+            self.scan();
+            begin_pos += 1;
         }
 
         return self.pos - begin_pos;

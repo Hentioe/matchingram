@@ -108,9 +108,9 @@ impl<'a> Parser<'a> {
         let mut optinal_groups = self.parse_optinal_group_list(vec![])?;
         if optinal_groups.len() > 0 {
             groups.append(&mut optinal_groups);
-            self.scan();
         }
 
+        self.scan();
         if self.ct != Some(&Token::EOF) {
             let position = self.current_position()?;
             return Err(Error::ShouldEndHere {
@@ -138,9 +138,9 @@ impl<'a> Parser<'a> {
 
         let mut optinal_conts = self.parse_optinal_cont_list(vec![])?;
         if optinal_conts.len() > 0 {
-            self.scan();
             conts.append(&mut optinal_conts);
         }
+        self.scan();
 
         if self.ct != Some(&Token::CloseParenthesis) {
             let position = self.current_position()?;
@@ -154,7 +154,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_optinal_cont_list(&mut self, mut conts: Vec<Cont>) -> Result<Vec<Cont>> {
+        if conts.len() > 0 {
+            self.scan();
+        }
+
         if self.ct != Some(&Token::And) {
+            self.back();
             return Ok(conts);
         }
 
@@ -165,7 +170,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_optinal_group_list(&mut self, mut groups: ContGroups) -> Result<ContGroups> {
+        if groups.len() > 0 {
+            self.scan();
+        }
+
         if self.ct != Some(&Token::Or) {
+            self.back();
             return Ok(groups);
         }
 
@@ -280,6 +290,14 @@ impl<'a> Parser<'a> {
         self.ct
     }
 
+    // 回到上一个 token。
+    fn back(&mut self) -> Option<&Token> {
+        self.pos -= 1;
+        self.ct = self.input.get(self.pos);
+
+        self.ct
+    }
+
     // 扫描指定位置的 token，并移动指针到该位置。
     fn scan_at(&mut self, pos: usize) -> Option<&Token> {
         self.pos = pos;
@@ -302,10 +320,10 @@ impl<'a> Parser<'a> {
 fn test_parser() {
     use super::models::Message;
 
-    let rule = r#"(not message.text contains_one {"say:" "说："}) or (message.text contains_one {110 120})"#;
+    let rule = r#"(not message.text contains_one {"say:" "说："})"#;
     let input = rule.chars().collect::<Vec<_>>();
-
     let mut lexer = Lexer::new(&input);
+
     let parser = Parser::new(&mut lexer).unwrap();
     let mut matcher = parser.parse().unwrap();
 

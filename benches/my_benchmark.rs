@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         message.text contains_all {"洋"} and
         message.text contains_all {"年"} and
         message.text contains_all {"月"} and
-        message.text contains_all {"太" "平" "年" "月"}
+        message.text contains_all {"太" "平" "洋" "年" "月"}
     )"#;
 
     assert!(matches!(rule_match(regular_rule), Ok(true)));

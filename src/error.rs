@@ -1,6 +1,7 @@
 //! 全部可能出现的错误。
 
 use super::lexer::Token;
+use super::matcher::{Field, Operator};
 use thiserror::Error;
 
 /// 错误类别。
@@ -23,8 +24,8 @@ pub enum Error {
     MissingPosition { index: usize },
 
     /// 不支持的操作符。
-    #[error("the field `{field:?}` does not support the `{operator:?}` operator")]
-    UnsupportedOperator { field: String, operator: String },
+    #[error("the field `{}` does not support the `{}` operator", field.to_string(), operator.to_string())]
+    UnsupportedOperator { field: Field, operator: Operator },
 
     /// 未知的字段。
     #[error("unknown `{field:?}` field")]
@@ -42,9 +43,17 @@ pub enum Error {
     #[error("missing field from column {column:?}")]
     MissingField { column: usize },
 
-    /// 缺失操作符。
+    /// 解析中缺失操作符。
     #[error("missing operator from column {column:?}")]
     MissingOperator { column: usize },
+
+    /// 字段需要运算符。
+    #[error("field `{}` requires operator", field.to_string())]
+    FieldRequireOperator { field: Field },
+
+    /// 字段需要值。
+    #[error("field `{}` requires value", field.to_string())]
+    FieldRequireValue { field: Field },
 
     /// 缺失值。
     #[error("missing value from column {column:?}")]

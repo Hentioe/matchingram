@@ -28,21 +28,21 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_ma
 ///         Cont {
 ///             is_negative: false,
 ///             field: Field::MessageText,
-///             operator: Operator::ContainsOne,
-///             value: vec![Value::from_str("柬埔寨"), Value::from_str("东南亚")],
+///             operator: Some(Operator::ContainsOne),
+///             value: Some(vec![Value::from_str("柬埔寨"), Value::from_str("东南亚")]),
 ///         },
 ///         Cont {
 ///             is_negative: false,
 ///             field: Field::MessageText,
-///             operator: Operator::ContainsOne,
-///             value: vec![Value::from_str("菠菜"), Value::from_str("博彩")],
+///             operator: Some(Operator::ContainsOne),
+///             value: Some(vec![Value::from_str("菠菜"), Value::from_str("博彩")]),
 ///         },
 ///     ],
 ///     vec![Cont {
 ///         is_negative: false,
 ///         field: Field::MessageText,
-///         operator: Operator::ContainsAll,
-///         value: vec![Value::from_str("承接"), Value::from_str("广告")],
+///         operator: Some(Operator::ContainsAll),
+///         value: Some(vec![Value::from_str("承接"), Value::from_str("广告")]),
 ///     }],
 /// ];
 /// let mut matcher = Matcher::new(groups);
@@ -80,7 +80,7 @@ pub struct Matcher {
     /// 条件组序列。
     pub groups: Groups,
     // 上个组的匹配结果。
-    last_is_matching: bool,
+    is_last_match: bool,
 }
 
 impl Matcher {
@@ -102,7 +102,7 @@ impl Matcher {
     pub fn new(groups: Groups) -> Self {
         Matcher {
             groups: groups,
-            last_is_matching: true,
+            is_last_match: true,
         }
     }
 }
@@ -121,9 +121,9 @@ pub struct Cont {
     /// 字段。
     pub field: Field,
     /// 运算符。
-    pub operator: Operator,
+    pub operator: Option<Operator>,
     /// 值。
-    pub value: Vec<Value>,
+    pub value: Option<Vec<Value>>,
 }
 
 /// 条件字段。
@@ -191,39 +191,52 @@ impl Cont {
     /// 从字符串数据中构建条件。
     pub fn new(
         is_negative: bool,
-        field_s: String,
-        operator_s: String,
+        field_str: String,
+        operator_str: String,
         value: Vec<Value>,
     ) -> Result<Self> {
         let operator =
-            Operator::from_str(operator_s.as_str()).map_err(|_| Error::UnknownOperator {
-                operator: operator_s.clone(),
+            Operator::from_str(operator_str.as_str()).map_err(|_| Error::UnknownOperator {
+                operator: operator_str.clone(),
             })?;
 
-        let field = Field::from_str(field_s.as_str()).map_err(|_| Error::UnknownField {
-            field: field_s.clone(),
+        let field = Field::from_str(field_str.as_str()).map_err(|_| Error::UnknownField {
+            field: field_str.clone(),
         })?;
 
         let empty_operators = &vec![];
         let operators = FIELD_OPERATORS
-            .get(field_s.as_str())
+            .get(field_str.as_str())
             .copied()
             .unwrap_or(&empty_operators);
 
         // 检查运算符是否支持。
         if !operators.contains(&operator) {
-            return Err(Error::UnsupportedOperator {
-                field: field_s,
-                operator: operator_s,
-            });
+            return Err(Error::UnsupportedOperator { field, operator });
         }
 
         Ok(Cont {
             is_negative,
             field,
-            operator,
-            value,
+            operator: Some(operator),
+            value: Some(value),
         })
+    }
+
+    fn operator(&self) -> Result<&Operator> {
+        if let Some(operator) = &self.operator {
+            Ok(operator)
+        } else {
+            Err(Error::FieldRequireOperator { field: self.field })
+        }
+    }
+
+    fn value(&self) -> Result<&Vec<Value>> {
+        if let Some(value) = &self.value {
+            Ok(value)
+        } else {
+            Err(Error::FieldRequireValue { field: self.field })
+        }
     }
 }
 
@@ -233,11 +246,11 @@ impl Matcher {
     }
 
     fn loop_match(&mut self, message: &Message, position: usize) -> Result<bool> {
-        if position > 0 && self.last_is_matching {
+        if position > 0 && self.is_last_match {
             return Ok(true);
         }
         if position > (self.groups.len() - 1) {
-            return Ok(self.last_is_matching);
+            return Ok(self.is_last_match);
         }
 
         let conts = unsafe { self.groups.get_unchecked(position) };
@@ -249,7 +262,7 @@ impl Matcher {
                 break;
             }
         }
-        self.last_is_matching = result;
+        self.is_last_match = result;
         self.loop_match(message, position + 1)
     }
 }
@@ -259,10 +272,10 @@ impl Cont {
         let r = match self.field {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
-                    match self.operator {
+                    match self.operator()? {
                         Operator::ContainsOne => {
                             let mut result = false;
-                            for v in &self.value {
+                            for v in self.value()? {
                                 if text.contains(&v.as_string()) {
                                     result = true;
                                     break;
@@ -273,7 +286,7 @@ impl Cont {
                         }
                         Operator::ContainsAll => {
                             let mut result = true;
-                            for v in &self.value {
+                            for v in self.value()? {
                                 if !text.contains(&v.as_string()) {
                                     result = false;
                                     break;
@@ -283,13 +296,13 @@ impl Cont {
                             Ok(result)
                         }
                         Operator::Eq => {
-                            let result = text.eq(&self.value.as_string());
+                            let result = text.eq(&self.value()?.as_string());
 
                             Ok(result)
                         }
                         _ => Err(Error::UnsupportedOperator {
-                            field: self.field.to_string(),
-                            operator: self.operator.to_string(),
+                            field: self.field,
+                            operator: *self.operator()?,
                         }),
                     }
                 } else {

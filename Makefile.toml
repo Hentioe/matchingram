@@ -1,0 +1,66 @@
+[tasks."data.gen"]
+script_runner = "@rust"
+script = [
+    '''
+use std::env;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::PathBuf;
+
+fn main() {
+    let rule = make_groups(690);
+    let mut file = File::create(make_fpath()).unwrap();
+
+    file.write_all(rule.as_bytes()).unwrap();
+}
+
+fn make_fpath() -> PathBuf {
+    let mut fpath = env::current_dir().unwrap();
+
+    fpath.push("data");
+    fpath.push("1mb-rule");
+    fpath.set_extension("txt");
+
+    fpath
+}
+
+fn make_groups(count: usize) -> String {
+    let range = 0..count;
+    let group_make = |i: usize| {
+        let mut group = make_group(25);
+        if i < count - 1 {
+            group.push_str(" or ");
+        }
+        group.to_string()
+    };
+
+    range
+        .map(group_make)
+        .collect::<Vec<_>>()
+        .join("")
+        .to_string()
+}
+
+fn make_group(count: usize) -> String {
+    let range = 0..count;
+    let cont_make = |i: usize| {
+        let mut cont = String::new();
+        if i == 0 {
+            cont.push_str("  ");
+        }
+
+        cont.push_str(r#"message.text contains_one {"小明" "小红" "小象"}"#);
+
+        if i < count - 1 {
+            cont.push_str(" and\n");
+        }
+
+        cont.to_string()
+    };
+    let conts = range.map(cont_make).collect::<Vec<_>>().join("  ");
+
+    format!("(\n{conts}\n)", conts = conts)
+}
+
+''',
+]

@@ -154,9 +154,7 @@ impl<'a> Lexer<'a> {
                         self.scan();
                         self.skip_white_space();
                         if !self.scan_operator()? {
-                            return Err(Error::MissingOperator {
-                                column: self.pos + 1,
-                            });
+                            self.back();
                         }
                     }
                     ')' => self.push_token(Token::CloseParenthesis)?,
@@ -208,9 +206,7 @@ impl<'a> Lexer<'a> {
                         self.scan();
                         self.skip_white_space();
                         if !self.scan_operator()? {
-                            return Err(Error::MissingOperator {
-                                column: self.pos + 1,
-                            });
+                            self.back();
                         }
 
                         Ok(true)
@@ -370,15 +366,11 @@ impl<'a> Lexer<'a> {
         }
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
-        let mut next_char = self.at_char(cur_pos);
+        let mut end_char = self.at_char(cur_pos);
 
-        while next_char.is_some() {
-            if next_char.is_white_space() {
-                break;
-            }
-
+        while end_char != Some(&')') && !end_char.is_white_space() {
             cur_pos += 1;
-            next_char = self.at_char(cur_pos);
+            end_char = self.at_char(cur_pos);
         }
 
         let is_field = cur_pos > begin_pos;
@@ -400,15 +392,11 @@ impl<'a> Lexer<'a> {
     fn scan_operator(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
         let mut cur_pos = begin_pos;
-        let mut next_char = self.at_char(cur_pos);
+        let mut end_char = self.at_char(cur_pos);
 
-        while next_char.is_some() {
-            if next_char.is_white_space() {
-                break;
-            }
-
+        while end_char != Some(&')') && !end_char.is_white_space() {
             cur_pos += 1;
-            next_char = self.at_char(cur_pos);
+            end_char = self.at_char(cur_pos);
         }
 
         let is_operator = cur_pos > begin_pos;
@@ -452,9 +440,17 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // 扫描下一个字符。此方法调用后会自增指针位置。
+    // 扫描下一个字符并自增指针位置。
     fn scan(&mut self) -> Option<&char> {
         self.pos += 1;
+        self.current_char = self.input.get(self.pos);
+
+        self.current_char
+    }
+
+    // 回退一个字符并自减指针位置。
+    fn back(&mut self) -> Option<&char> {
+        self.pos -= 1;
         self.current_char = self.input.get(self.pos);
 
         self.current_char
@@ -575,7 +571,7 @@ impl IsDecimal for Option<&char> {
 fn test_lexer() {
     use Token::*;
 
-    let rule = r#"(not message.text contains_one {"say:" "说："} and message.text.size gt 1234567890) or (message.text eq "/say")"#;
+    let rule = r#"(not message.from.is_bot) or (message.text eq "/say")"#;
     let input = rule.chars().collect::<Vec<_>>();
 
     let mut lexer = Lexer::new(&input);
@@ -584,20 +580,7 @@ fn test_lexer() {
     let truthy = [
         (OpenParenthesis, String::from("(")),
         (Not, String::from("not")),
-        (Field, String::from("message.text")),
-        (Operator, String::from("contains_one")),
-        (OpenBrace, String::from("{")),
-        (Quote, String::from("\"")),
-        (Letter, String::from("say:")),
-        (Quote, String::from("\"")),
-        (Quote, String::from("\"")),
-        (Letter, String::from("说：")),
-        (Quote, String::from("\"")),
-        (CloseBrace, String::from("}")),
-        (And, String::from("and")),
-        (Field, String::from("message.text.size")),
-        (Operator, String::from("gt")),
-        (Decimal, String::from("1234567890")),
+        (Field, String::from("message.from.is_bot")),
         (CloseParenthesis, String::from(")")),
         (Or, String::from("or")),
         (OpenParenthesis, String::from("(")),

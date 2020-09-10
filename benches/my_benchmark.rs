@@ -70,13 +70,14 @@ fn criterion_benchmark(c: &mut Criterion) {
     )"#;
 
     let mb_rule_data = load_data_file("1mb-rule.txt");
-    let mb_rule = std::str::from_utf8(&mb_rule_data).unwrap();
+    let size_1mb_rule = std::str::from_utf8(&mb_rule_data).unwrap();
 
     assert!(matches!(rule_match(regular_rule), Ok(true)));
     assert!(matches!(rule_match(regular_negate_rule), Ok(false)));
     assert!(matches!(rule_match(long_rule), Ok(true)));
     assert!(matches!(rule_match(longer_rule), Ok(true)));
-    assert!(matches!(compile_rule(mb_rule), Ok(_)));
+    assert!(matches!(compile_rule(size_1mb_rule), Ok(_)));
+    assert!(matches!(rule_match(size_1mb_rule), Ok(false)));
 
     c.bench_function("rule_match regular-rule", |b| {
         b.iter(|| rule_match(black_box(regular_rule)))
@@ -91,7 +92,10 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| rule_match(black_box(long_rule)))
     });
     c.bench_function("compile_rule 1mb-rule", |b| {
-        b.iter(|| compile_rule(black_box(mb_rule)))
+        b.iter(|| compile_rule(black_box(size_1mb_rule)))
+    });
+    c.bench_function("rule_match worst-1mb-rule", |b| {
+        b.iter(|| rule_match(black_box(size_1mb_rule)))
     });
 }
 

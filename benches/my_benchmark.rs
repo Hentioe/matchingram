@@ -82,7 +82,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("rule_match regular-rule", |b| {
         b.iter(|| rule_match(black_box(regular_rule)))
     });
-    c.bench_function("rule_match regular-netate-rule", |b| {
+    c.bench_function("rule_match regular-negative-rule", |b| {
         b.iter(|| rule_match(black_box(regular_negate_rule)))
     });
     c.bench_function("rule_match long-rule", |b| {

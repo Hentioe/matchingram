@@ -25,6 +25,7 @@ pub mod error;
 pub mod lexer;
 pub mod matcher;
 pub mod models;
+pub mod operators;
 pub mod parser;
 pub mod result;
 

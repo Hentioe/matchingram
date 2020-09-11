@@ -6,6 +6,7 @@ use strum_macros::{EnumString, ToString};
 
 use super::error::Error;
 use super::models::Message;
+use super::operators::prelude::*;
 use super::result::Result;
 
 pub type Groups = Vec<Vec<Cont>>;
@@ -161,7 +162,7 @@ pub enum Operator {
     ContainsAll,
 }
 
-trait TakeAStr {
+pub trait TakeAStr {
     fn take_a_str(&self) -> Result<&str>;
 }
 
@@ -332,11 +333,7 @@ impl Cont {
 
                             Ok(result)
                         }
-                        Operator::Eq => {
-                            let result = text.eq(&self.value()?.take_a_str()?);
-
-                            Ok(result)
-                        }
+                        Operator::Eq => self.value()?.eq_ope(text),
                         _ => Err(Error::UnsupportedOperator {
                             field: self.field,
                             operator: *self.operator()?,

@@ -11,7 +11,8 @@ use super::result::Result;
 pub type Groups = Vec<Vec<Cont>>;
 
 pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
-    "message.text" =>  &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll]
+    "message.text" =>  &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll],
+    "message.from.is_bot" => &[]
 };
 
 /// 匹配器。一般作为表达式的编译目标。
@@ -129,12 +130,15 @@ pub struct Cont {
 /// 条件字段。
 #[derive(Debug, Copy, Clone, EnumString, ToString)]
 pub enum Field {
-    /// 消息文本
+    /// 消息文本。
     #[strum(serialize = "message.text")]
     MessageText,
-    /// 消息文本大小
+    /// 消息文本大小。
     #[strum(serialize = "message.text.size")]
     MessageTextSize,
+    /// 消息来源是否为 bot。
+    #[strum(serialize = "message.from.is_bot")]
+    MessageFromIsBot,
 }
 
 /// 条件操作符。
@@ -197,18 +201,18 @@ impl Cont {
     ) -> Result<Self> {
         let operator =
             Operator::from_str(operator_str.as_str()).map_err(|_| Error::UnknownOperator {
-                operator: operator_str.clone(),
+                operator: operator_str.to_owned(),
             })?;
 
         let field = Field::from_str(field_str.as_str()).map_err(|_| Error::UnknownField {
-            field: field_str.clone(),
+            field: field_str.to_owned(),
         })?;
 
-        let empty_operators = &vec![];
         let operators = FIELD_OPERATORS
             .get(field_str.as_str())
             .copied()
-            .unwrap_or(&empty_operators);
+            // 没有注册运算符列表，表示字段未启用。
+            .ok_or(Error::FieldNotEndabled { field })?;
 
         // 检查运算符是否支持。
         if !operators.contains(&operator) {
@@ -220,6 +224,25 @@ impl Cont {
             field,
             operator: Some(operator),
             value: Some(value),
+        })
+    }
+
+    pub fn single_field(is_negative: bool, field_str: String) -> Result<Self> {
+        let field = Field::from_str(field_str.as_str()).map_err(|_| Error::UnknownField {
+            field: field_str.to_owned(),
+        })?;
+
+        let _operators = FIELD_OPERATORS
+            .get(field_str.as_str())
+            .copied()
+            // 没有注册运算符列表，表示字段未启用。
+            .ok_or(Error::FieldNotEndabled { field })?;
+
+        Ok(Cont {
+            is_negative,
+            field,
+            operator: None,
+            value: None,
         })
     }
 
@@ -312,6 +335,13 @@ impl Cont {
             Field::MessageTextSize => {
                 // TODO：有待实现。
                 Ok(false)
+            }
+            Field::MessageFromIsBot => {
+                if let Some(from) = &message.from {
+                    Ok(from.is_bot)
+                } else {
+                    Ok(false)
+                }
             }
         };
 

@@ -394,6 +394,10 @@ impl<'a> Lexer<'a> {
         let mut cur_pos = begin_pos;
         let mut end_char = self.at_char(cur_pos);
 
+        if self.current_char == Some(&'a') && self.is_and_keywords() {
+            return Ok(false);
+        }
+
         while end_char != Some(&')') && !end_char.is_white_space() {
             cur_pos += 1;
             end_char = self.at_char(cur_pos);
@@ -427,10 +431,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn tokenize_and(&mut self) -> Result<bool> {
-        if self.at_char(self.pos + 1) == Some(&'n')
-            && self.at_char(self.pos + 2) == Some(&'d')
-            && self.at_char(self.pos + 3).is_white_space()
-        {
+        if self.is_and_keywords() {
             self.scan_at(self.pos + 2);
             self.push_token(Token::And)?;
 
@@ -438,6 +439,13 @@ impl<'a> Lexer<'a> {
         } else {
             Ok(false)
         }
+    }
+
+    // 当前位置是否是 `and` 关键字。
+    fn is_and_keywords(&self) -> bool {
+        self.at_char(self.pos + 1) == Some(&'n')
+            && self.at_char(self.pos + 2) == Some(&'d')
+            && self.at_char(self.pos + 3).is_white_space()
     }
 
     // 扫描下一个字符并自增指针位置。

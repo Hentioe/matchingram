@@ -203,18 +203,26 @@ impl<'a> Parser<'a> {
         let field = self.current_data()?.iter().collect();
 
         self.scan();
-        if self.ct != Some(&Token::Operator) {
-            let position = self.current_position()?;
-            return Err(Error::MissingOperator {
-                column: position.begin,
-            });
+
+        if self.ct == Some(&Token::And) || self.ct == Some(&Token::CloseParenthesis) {
+            self.back();
+            // 单字段条件
+            Ok(Cont::single_field(is_negative, field)?)
+        } else {
+            // 多字段条件
+            if self.ct != Some(&Token::Operator) {
+                let position = self.current_position()?;
+                return Err(Error::MissingOperator {
+                    column: position.begin,
+                });
+            }
+            let operator = self.current_data()?.iter().collect();
+
+            self.scan();
+            let value = self.parse_value()?;
+
+            Ok(Cont::new(is_negative, field, operator, value)?)
         }
-        let operator = self.current_data()?.iter().collect();
-
-        self.scan();
-        let value = self.parse_value()?;
-
-        Ok(Cont::new(is_negative, field, operator, value)?)
     }
 
     fn parse_value(&mut self) -> Result<Vec<Value>> {

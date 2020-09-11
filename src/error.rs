@@ -23,9 +23,13 @@ pub enum Error {
     #[error("missing token position, index: {index:?}")]
     MissingPosition { index: usize },
 
-    /// 不支持的操作符。
+    /// 不支持的运算符。
     #[error("the field `{}` does not support the `{}` operator", field.to_string(), operator.to_string())]
     UnsupportedOperator { field: Field, operator: Operator },
+
+    /// 字段未被启用。
+    #[error("the field `{}` is not officially enabled", field.to_string())]
+    FieldNotEndabled { field: Field },
 
     /// 未知的字段。
     #[error("unknown `{field:?}` field")]

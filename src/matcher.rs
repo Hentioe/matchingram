@@ -108,7 +108,7 @@ impl Matcher {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Decimal(i64),
     Letter(String),
@@ -147,13 +147,13 @@ pub enum Field {
 pub enum Operator {
     // 等于。
     Eq,
-    // 大于
+    // 大于。
     Gt,
-    // 小于
+    // 小于。
     Lt,
-    // 大于或等于
+    // 大于或等于。
     Ge,
-    // 小于或等于
+    // 小于或等于。
     Le,
     /// 包含其一。
     ContainsOne,
@@ -161,27 +161,41 @@ pub enum Operator {
     ContainsAll,
 }
 
-trait AsString {
-    fn as_string(&self) -> String;
+trait TakeAStr {
+    fn take_a_str(&self) -> Result<&str>;
 }
 
-impl AsString for Value {
-    fn as_string(&self) -> String {
+impl ToString for Value {
+    fn to_string(&self) -> String {
         use Value::*;
 
         match self {
-            Letter(v) => v.clone(),
+            Letter(v) => v.to_owned(),
             Decimal(v) => v.to_string(),
         }
     }
 }
 
-impl AsString for Vec<Value> {
-    fn as_string(&self) -> String {
-        self.into_iter()
-            .map(|v| v.as_string())
-            .collect::<Vec<_>>()
-            .join(" ")
+impl TakeAStr for Value {
+    fn take_a_str(&self) -> Result<&str> {
+        use Value::*;
+
+        match self {
+            Letter(v) => Ok(v),
+            Decimal(_) => Err(Error::NotAString {
+                value: self.clone(),
+            }),
+        }
+    }
+}
+
+impl TakeAStr for Vec<Value> {
+    fn take_a_str(&self) -> Result<&str> {
+        if let Some(first) = self.first() {
+            first.take_a_str()
+        } else {
+            Err(Error::TakeInEmptyList)
+        }
     }
 }
 
@@ -299,7 +313,7 @@ impl Cont {
                         Operator::ContainsOne => {
                             let mut result = false;
                             for v in self.value()? {
-                                if text.contains(&v.as_string()) {
+                                if text.contains(v.take_a_str()?) {
                                     result = true;
                                     break;
                                 }
@@ -310,7 +324,7 @@ impl Cont {
                         Operator::ContainsAll => {
                             let mut result = true;
                             for v in self.value()? {
-                                if !text.contains(&v.as_string()) {
+                                if !text.contains(v.take_a_str()?) {
                                     result = false;
                                     break;
                                 }
@@ -319,7 +333,7 @@ impl Cont {
                             Ok(result)
                         }
                         Operator::Eq => {
-                            let result = text.eq(&self.value()?.as_string());
+                            let result = text.eq(&self.value()?.take_a_str()?);
 
                             Ok(result)
                         }

@@ -1,7 +1,7 @@
 //! 全部可能出现的错误。
 
 use super::lexer::Token;
-use super::matcher::{Field, Operator};
+use super::matcher::{Field, Operator, Value};
 use thiserror::Error;
 
 /// 错误类别。
@@ -105,6 +105,12 @@ pub enum Error {
     /// 解析失败。
     #[error("failed to parse from column {column:?}")]
     ParseFailed { column: usize },
+
+    #[error("the value `{}` is not a string", value.to_string())]
+    NotAString { value: Value },
+
+    #[error("try to take a content in empty list value")]
+    TakeInEmptyList,
 
     #[error("{}", source.to_string())]
     #[cfg(feature = "json")]

@@ -286,7 +286,7 @@ impl<'a> Parser<'a> {
     fn at_data(&self, pos: usize) -> Result<&'a [char]> {
         self.data
             .get(pos)
-            .cloned()
+            .copied()
             .ok_or(Error::MissingTokenData { index: self.pos })
     }
 

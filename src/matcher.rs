@@ -14,6 +14,7 @@ pub type Groups = Vec<Vec<Cont>>;
 
 pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
     "message.text" =>  &[Operator::Eq, Operator::Any, Operator::All],
+    "message.text.size" => &[Operator::Eq, Operator::Gt, Operator::Ge, Operator::Le],
     "message.from.is_bot" => &[]
 };
 
@@ -370,8 +371,8 @@ impl Cont {
                     match self.operator()? {
                         Operator::Eq => self.value()?.eq_ope_for_target_len(text),
                         Operator::Gt => self.value()?.gt_ope_for_target_len(text),
-                        Operator::Ge => self.value()?.gt_ope_for_target_len(text),
-                        Operator::Le => self.value()?.gt_ope_for_target_len(text),
+                        Operator::Ge => self.value()?.ge_ope_for_target_len(text),
+                        Operator::Le => self.value()?.le_ope_for_target_len(text),
                         _ => Err(unsupported_operator_err()?),
                     }
                 } else {

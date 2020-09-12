@@ -87,6 +87,7 @@ impl<'a> Parser<'a> {
         if !lexer.is_end() {
             lexer.tokenize()?;
         }
+
         let input = lexer.output();
 
         Ok(Parser {
@@ -235,7 +236,6 @@ impl<'a> Parser<'a> {
                 value.push(self.prase_single_value()?);
                 self.scan();
             }
-
             Ok(value)
         } else {
             let value = self.prase_single_value()?;
@@ -249,14 +249,11 @@ impl<'a> Parser<'a> {
 
         if self.ct == Some(&Token::Decimal) {
             let value_data = self.at_data(self.pos)?;
+            let value_string = value_data.iter().collect::<String>();
             let value_decimal =
-                i64::from_str_radix(value_data.iter().collect::<String>().as_str(), 10).map_err(
-                    |_| Error::DecimalParseFailed {
-                        column: position.begin,
-                    },
-                )?;
-
-            self.scan();
+                i64::from_str_radix(&value_string, 10).map_err(|_| Error::DecimalParseFailed {
+                    column: position.begin,
+                })?;
 
             return Ok(Value::Decimal(value_decimal));
         }

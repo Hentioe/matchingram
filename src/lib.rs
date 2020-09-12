@@ -21,6 +21,8 @@
 //! # **注意**
 //! - 当前不支持**特殊情况一**，原因是尚未决定是否采取相同设计。
 
+#![feature(min_specialization)]
+
 pub mod error;
 pub mod lexer;
 pub mod matcher;
@@ -28,6 +30,7 @@ pub mod models;
 pub mod operators;
 pub mod parser;
 pub mod result;
+pub mod truthy;
 
 #[doc(inline)]
 pub use error::Error;

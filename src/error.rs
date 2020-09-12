@@ -109,8 +109,11 @@ pub enum Error {
     #[error("the value `{}` is not a string", value.to_string())]
     NotAString { value: Value },
 
-    #[error("try to take a content in empty list value")]
-    TakeInEmptyList,
+    #[error("the value `{}` is not a decimal number", value.to_string())]
+    NotADecimal { value: Value },
+
+    #[error("cannot reference value in empty list")]
+    RefValueInEmptyList,
 
     #[error("{}", source.to_string())]
     #[cfg(feature = "json")]

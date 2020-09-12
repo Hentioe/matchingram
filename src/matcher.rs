@@ -163,8 +163,12 @@ pub enum Operator {
     All,
 }
 
-pub trait TakeAStr {
-    fn take_a_str(&self) -> Result<&str>;
+pub trait RefSinleValue {
+    fn ref_a_str(&self) -> Result<&str>;
+    fn ref_a_decimal(&self) -> Result<&i64>;
+}
+pub trait RefADecimal {
+    fn ref_a_decimal(&self) -> Result<&i64>;
 }
 
 impl ToString for Value {
@@ -178,8 +182,8 @@ impl ToString for Value {
     }
 }
 
-impl TakeAStr for Value {
-    fn take_a_str(&self) -> Result<&str> {
+impl RefSinleValue for Value {
+    fn ref_a_str(&self) -> Result<&str> {
         use Value::*;
 
         match self {
@@ -189,14 +193,33 @@ impl TakeAStr for Value {
             }),
         }
     }
+
+    fn ref_a_decimal(&self) -> Result<&i64> {
+        use Value::*;
+
+        match self {
+            Letter(_) => Err(Error::NotADecimal {
+                value: self.clone(),
+            }),
+            Decimal(v) => Ok(v),
+        }
+    }
 }
 
-impl TakeAStr for Vec<Value> {
-    fn take_a_str(&self) -> Result<&str> {
+impl RefSinleValue for Vec<Value> {
+    fn ref_a_str(&self) -> Result<&str> {
         if let Some(first) = self.first() {
-            first.take_a_str()
+            first.ref_a_str()
         } else {
-            Err(Error::TakeInEmptyList)
+            Err(Error::RefValueInEmptyList)
+        }
+    }
+
+    fn ref_a_decimal(&self) -> Result<&i64> {
+        if let Some(first) = self.first() {
+            first.ref_a_decimal()
+        } else {
+            Err(Error::RefValueInEmptyList)
         }
     }
 }
@@ -322,25 +345,38 @@ macro_rules! child_is_truthy {
 
 impl Cont {
     pub fn match_message(&self, message: &Message) -> Result<bool> {
+        let unsupported_operator_err = || -> Result<Error> {
+            Ok(Error::UnsupportedOperator {
+                field: self.field,
+                operator: *self.operator()?,
+            })
+        };
+
         let r = match self.field {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
                     match self.operator()? {
+                        Operator::Eq => self.value()?.eq_ope(text),
                         Operator::Any => self.value()?.any_ope(text),
                         Operator::All => self.value()?.all_ope(text),
-                        Operator::Eq => self.value()?.eq_ope(text),
-                        _ => Err(Error::UnsupportedOperator {
-                            field: self.field,
-                            operator: *self.operator()?,
-                        }),
+                        _ => Err(unsupported_operator_err()?),
                     }
                 } else {
                     Ok(false)
                 }
             }
             Field::MessageTextSize => {
-                // TODO：待实现。
-                Ok(false)
+                if let Some(text) = message.text.as_ref() {
+                    match self.operator()? {
+                        Operator::Eq => self.value()?.eq_ope_for_target_len(text),
+                        Operator::Gt => self.value()?.gt_ope_for_target_len(text),
+                        Operator::Ge => self.value()?.gt_ope_for_target_len(text),
+                        Operator::Le => self.value()?.gt_ope_for_target_len(text),
+                        _ => Err(unsupported_operator_err()?),
+                    }
+                } else {
+                    Ok(false)
+                }
             }
             Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
         };

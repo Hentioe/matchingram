@@ -1,5 +1,5 @@
 /// 运算符 `any` 的 trait 和相关实现。
-use crate::matcher::{TakeAStr, Value};
+use crate::matcher::{RefSinleValue, Value};
 use crate::result::Result;
 
 pub trait AnyOperator<T> {
@@ -10,7 +10,7 @@ impl AnyOperator<&String> for Vec<Value> {
     fn any_ope(&self, target: &String) -> Result<bool> {
         let mut result = false;
         for v in self {
-            if target.contains(v.take_a_str()?) {
+            if target.contains(v.ref_a_str()?) {
                 result = true;
                 break;
             }

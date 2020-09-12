@@ -14,7 +14,7 @@ impl EqOperator<&String> for Vec<Value> {
 impl EqOperator<Option<&String>> for Vec<Value> {
     fn eq_ope(&self, target: Option<&String>) -> Result<bool> {
         if let Some(target_data) = target {
-            Ok(self.take_a_str()?.eq(target_data))
+            self.eq_ope(target_data)
         } else {
             Ok(false)
         }

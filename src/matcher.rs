@@ -8,6 +8,7 @@ use super::error::Error;
 use super::models::Message;
 use super::operators::prelude::*;
 use super::result::Result;
+use super::truthy::IsTruthy;
 
 pub type Groups = Vec<Vec<Cont>>;
 
@@ -305,34 +306,28 @@ impl Matcher {
     }
 }
 
+// 检查子字段是否为存在或为真。
+//
+// 第一个参数（父级）表达式为 `Option<T>` 类型，如果为 `None` 则返回 `false`。否则进一步判断。
+// 如果父级存在，将返回子级字段的 `is_truthy` 方法的调用结果。
+macro_rules! child_is_truthy {
+    ($parent:expr, $field:tt) => {
+        if let Some(parent) = $parent {
+            parent.$field.is_truthy()
+        } else {
+            false
+        }
+    };
+}
+
 impl Cont {
     pub fn match_message(&self, message: &Message) -> Result<bool> {
         let r = match self.field {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
                     match self.operator()? {
-                        Operator::ContainsOne => {
-                            let mut result = false;
-                            for v in self.value()? {
-                                if text.contains(v.take_a_str()?) {
-                                    result = true;
-                                    break;
-                                }
-                            }
-
-                            Ok(result)
-                        }
-                        Operator::ContainsAll => {
-                            let mut result = true;
-                            for v in self.value()? {
-                                if !text.contains(v.take_a_str()?) {
-                                    result = false;
-                                    break;
-                                }
-                            }
-
-                            Ok(result)
-                        }
+                        Operator::ContainsOne => self.value()?.any_ope(text),
+                        Operator::ContainsAll => self.value()?.all_ope(text),
                         Operator::Eq => self.value()?.eq_ope(text),
                         _ => Err(Error::UnsupportedOperator {
                             field: self.field,
@@ -344,16 +339,10 @@ impl Cont {
                 }
             }
             Field::MessageTextSize => {
-                // TODO：有待实现。
+                // TODO：待实现。
                 Ok(false)
             }
-            Field::MessageFromIsBot => {
-                if let Some(from) = &message.from {
-                    Ok(from.is_bot)
-                } else {
-                    Ok(false)
-                }
-            }
+            Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
         };
 
         if let Ok(no_negative_result) = r {

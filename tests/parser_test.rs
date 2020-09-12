@@ -4,7 +4,7 @@ use matchingram::parser::Parser;
 
 #[test]
 fn test_parser() {
-    let rule = r#"(not message.text contains_one {"say:" "说："} and not message.from.is_bot)"#;
+    let rule = r#"(not message.text any {"say:" "说："} and not message.from.is_bot)"#;
     let input = rule.chars().collect::<Vec<_>>();
     let mut lexer = Lexer::new(&input);
 

@@ -22,7 +22,7 @@
 //! use matchingram::parser::Parser;
 //!
 //! // 准备规则，用于匹配东南亚博彩或广告业务宣传。
-//! let rule = r#"(message.text contains_one {"柬埔寨" "东南亚"} and message.text contains_one {"菠菜" "博彩"}) or (message.text contains_all {"承接" "广告"})"#;
+//! let rule = r#"(message.text any {"柬埔寨" "东南亚"} and message.text any {"菠菜" "博彩"}) or (message.text all {"承接" "广告"})"#;
 //! // 解析规则并得到 matcher 对象。
 //! let input = rule.chars().collect::<Vec<_>>();
 //! let mut lexer = Lexer::new(&input);

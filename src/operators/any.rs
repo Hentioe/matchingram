@@ -1,4 +1,4 @@
-/// 运算符 `contains_one` 的 trait 和相关实现。
+/// 运算符 `any` 的 trait 和相关实现。
 use crate::matcher::{TakeAStr, Value};
 use crate::result::Result;
 

@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 fn main() {
-    let rule = make_groups(690);
+    let rule = make_groups(802);
     let mut file = File::create(make_fpath()).unwrap();
 
     file.write_all(rule.as_bytes()).unwrap();
@@ -49,7 +49,7 @@ fn make_group(count: usize) -> String {
             cont.push_str("  ");
         }
 
-        cont.push_str(r#"message.text contains_one {"小明" "小红" "小象"}"#);
+        cont.push_str(r#"message.text any {"小明" "小红" "小象"}"#);
 
         if i < count - 1 {
             cont.push_str(" and\n");

@@ -6,7 +6,7 @@
 //! use matchingram::lexer::Lexer;
 //! use matchingram::lexer::Token::*;
 //!
-//! let rule = r#"(message.text contains_all "bye" and message.text contains_one {"parent" "world"}) or (message.text contains_one {"see" "you"})"#;
+//! let rule = r#"(message.text all "bye" and message.text any {"parent" "world"}) or (message.text any {"see" "you"})"#;
 //! let input = rule.chars().collect::<Vec<_>>();
 //!
 //! let mut lexer = Lexer::new(&input);
@@ -15,13 +15,13 @@
 //! let truthy = [
 //!     (OpenParenthesis, String::from("(")),
 //!     (Field, String::from("message.text")),
-//!     (Operator, String::from("contains_all")),
+//!     (Operator, String::from("all")),
 //!     (Quote, String::from("\"")),
 //!     (Letter, String::from("bye")),
 //!     (Quote, String::from("\"")),
 //!     (And, String::from("and")),
 //!     (Field, String::from("message.text")),
-//!     (Operator, String::from("contains_one")),
+//!     (Operator, String::from("any")),
 //!     (OpenBrace, String::from("{")),
 //!     (Quote, String::from("\"")),
 //!     (Letter, String::from("parent")),
@@ -34,7 +34,7 @@
 //!     (Or, String::from("or")),
 //!     (OpenParenthesis, String::from("(")),
 //!     (Field, String::from("message.text")),
-//!     (Operator, String::from("contains_one")),
+//!     (Operator, String::from("any")),
 //!     (OpenBrace, String::from("{")),
 //!     (Quote, String::from("\"")),
 //!     (Letter, String::from("see")),

@@ -46,27 +46,27 @@ static MESSAGE_TEST: &'static str = r#"
 "#;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let regular_rule = r#"(message.text contains_all {"太平洋" "年" "月"})"#;
-    let regular_negate_rule = r#"(not message.text contains_all {"太平洋" "年" "月"})"#;
+    let regular_rule = r#"(message.text all {"太平洋" "年" "月"})"#;
+    let regular_negate_rule = r#"(not message.text all {"太平洋" "年" "月"})"#;
     let long_rule = r#"(
-        message.text contains_one {"太"} and
-        message.text contains_one {"平"} and
-        message.text contains_one {"洋"} and
-        message.text contains_one {"年"} and
-        message.text contains_one {"月"}
+        message.text any {"太"} and
+        message.text any {"平"} and
+        message.text any {"洋"} and
+        message.text any {"年"} and
+        message.text any {"月"}
     )"#;
     let longer_rule = r#"(
-        message.text contains_one {"太"} and
-        message.text contains_one {"平"} and
-        message.text contains_one {"洋"} and
-        message.text contains_one {"年"} and
-        message.text contains_one {"月"} and
-        message.text contains_all {"太"} and
-        message.text contains_all {"平"} and
-        message.text contains_all {"洋"} and
-        message.text contains_all {"年"} and
-        message.text contains_all {"月"} and
-        message.text contains_all {"太" "平" "洋" "年" "月"}
+        message.text any {"太"} and
+        message.text any {"平"} and
+        message.text any {"洋"} and
+        message.text any {"年"} and
+        message.text any {"月"} and
+        message.text all {"太"} and
+        message.text all {"平"} and
+        message.text all {"洋"} and
+        message.text all {"年"} and
+        message.text all {"月"} and
+        message.text all {"太" "平" "洋" "年" "月"}
     )"#;
 
     let mb_rule_data = load_data_file("1mb-rule.txt");

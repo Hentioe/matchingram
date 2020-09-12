@@ -46,7 +46,7 @@ use result::Result;
 /// use matchingram::rule_match;
 /// use matchingram::models::Message;
 ///
-/// let rule = r#"(message.text contains_one {"Hello" "Bye"} and message.text contains_all {"telegram"})"#;
+/// let rule = r#"(message.text any {"Hello" "Bye"} and message.text all {"telegram"})"#;
 /// let message1 = Message {
 ///     text: Some(format!("Hello telegram!")),
 ///     ..Default::default()
@@ -87,7 +87,7 @@ pub fn matcher_match_json<S: Into<String>>(matcher: &mut Matcher, json_data: S) 
 /// ```
 /// use matchingram::rule_match_json;
 ///
-/// let rule = r#"(message.text contains_one {"Hello" "Bye"} and message.text contains_all {"telegram"})"#;
+/// let rule = r#"(message.text any {"Hello" "Bye"} and message.text all {"telegram"})"#;
 /// let message1 = r#"{"text": "Hello telegram!"}"#;
 /// let message2 = r#"{"text": "Bye telegram!"}"#;
 ///

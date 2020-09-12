@@ -13,7 +13,7 @@ use super::truthy::IsTruthy;
 pub type Groups = Vec<Vec<Cont>>;
 
 pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
-    "message.text" =>  &[Operator::Eq, Operator::ContainsOne, Operator::ContainsAll],
+    "message.text" =>  &[Operator::Eq, Operator::Any, Operator::All],
     "message.from.is_bot" => &[]
 };
 
@@ -31,20 +31,20 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_ma
 ///         Cont {
 ///             is_negative: false,
 ///             field: Field::MessageText,
-///             operator: Some(Operator::ContainsOne),
+///             operator: Some(Operator::Any),
 ///             value: Some(vec![Value::from_str("柬埔寨"), Value::from_str("东南亚")]),
 ///         },
 ///         Cont {
 ///             is_negative: false,
 ///             field: Field::MessageText,
-///             operator: Some(Operator::ContainsOne),
+///             operator: Some(Operator::Any),
 ///             value: Some(vec![Value::from_str("菠菜"), Value::from_str("博彩")]),
 ///         },
 ///     ],
 ///     vec![Cont {
 ///         is_negative: false,
 ///         field: Field::MessageText,
-///         operator: Some(Operator::ContainsAll),
+///         operator: Some(Operator::All),
 ///         value: Some(vec![Value::from_str("承接"), Value::from_str("广告")]),
 ///     }],
 /// ];
@@ -75,7 +75,7 @@ pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_ma
 /// ```
 /// 它对应的字符串表达式为：
 /// ```text
-/// (message.text contains_one {"柬埔寨" "东南亚"} and message.text contains_one {"菠菜" "博彩"}) or (message.text contains_all {"承接" "广告"})
+/// (message.text any {"柬埔寨" "东南亚"} and message.text any {"菠菜" "博彩"}) or (message.text all {"承接" "广告"})
 /// ```
 /// **注意**：匹配器中的所有条件之间都没有显式的关系存在，因为匹配器中每一个独立的组之间一定是 `or` 关系，组内的条件之间一定是 `and` 关系。即：已存在隐式的关系表达。
 #[derive(Debug, Default)]
@@ -157,10 +157,10 @@ pub enum Operator {
     Ge,
     // 小于或等于。
     Le,
-    /// 包含其一。
-    ContainsOne,
+    /// 包含任意一个。
+    Any,
     /// 包含全部。
-    ContainsAll,
+    All,
 }
 
 pub trait TakeAStr {
@@ -326,8 +326,8 @@ impl Cont {
             Field::MessageText => {
                 if let Some(text) = message.text.as_ref() {
                     match self.operator()? {
-                        Operator::ContainsOne => self.value()?.any_ope(text),
-                        Operator::ContainsAll => self.value()?.all_ope(text),
+                        Operator::Any => self.value()?.any_ope(text),
+                        Operator::All => self.value()?.all_ope(text),
                         Operator::Eq => self.value()?.eq_ope(text),
                         _ => Err(Error::UnsupportedOperator {
                             field: self.field,

@@ -170,6 +170,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | :-------------------------------- | :--: | :--: | :--: | :--: | :--: | :---: | :---: | :--: |
 | `message.from.id`                 |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.from.is_bot`             |      |      |      |      |      |       |       |      |
+| `message.from.first_name`         |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
 | `message.from.fullname`           |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
 | `message.from.language_code`      |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.forward_from_chat`       |      |      |      |      |      |       |       |      |
@@ -177,7 +178,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.forward_from_chat.type`  |  ✓   |      |      |      |  ✓   |       |       |      |
 | `message.forward_from_chat.title` |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
 | `message.reply_to_message`        |      |      |      |      |      |       |       |      |
-| `message.text`                    |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
+| `message.text`                    |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
 | `message.text.size`               |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.animation`               |      |      |      |      |      |       |       |      |
 | `message.animation.duration`      |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |

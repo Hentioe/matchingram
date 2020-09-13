@@ -4,6 +4,7 @@ pub use super::{
     eq::EqOperator,
     ge::{GeOperator, GeOperatorForContentLen},
     gt::{GtOperator, GtOperatorForContentLen},
+    hd::HdOperator,
     in_::InOperator,
     le::{LeOperator, LeOperatorForContentLen},
 };

@@ -16,7 +16,7 @@ pub type Groups = Vec<Vec<Cont>>;
 pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
     "message.text" =>  &[Operator::Eq, Operator::In, Operator::Any, Operator::All],
     "message.text.size" => &[Operator::Eq, Operator::Gt, Operator::Ge, Operator::Le],
-    "message.from.first_name" => &[Operator::Eq, Operator::In, Operator::Any, Operator::All],
+    "message.from.first_name" => &[Operator::Eq, Operator::In, Operator::Any, Operator::All, Operator::Hd],
     "message.from.is_bot" => &[]
 };
 
@@ -135,33 +135,138 @@ pub struct Cont {
 /// 条件字段。
 #[derive(Debug, Copy, Clone, EnumString, ToString)]
 pub enum Field {
+    /// 消息来源 ID。
+    #[strum(serialize = "message.from.id")]
+    MessageFromId,
+    /// 消息来源是否为 bot。
+    #[strum(serialize = "message.from.is_bot")]
+    MessageFromIsBot,
+    /// 消息来源的姓。
+    #[strum(serialize = "message.from.first_name")]
+    MessageFromFirstName,
+    /// 消息来源的全名。
+    #[strum(serialize = "message.from.full_name")]
+    MessageFromFullName,
+    /// 消息来源语言代码。
+    #[strum(serialize = "message.from.language_code")]
+    MessageFromLanguageCode,
+    /// 转发的源头 chat。
+    #[strum(serialize = "message.forward_from_chat")]
+    MessageForwardFromChat,
+    /// 转发的源头 chat 的 ID。
+    #[strum(serialize = "message.forward_from_chat.id")]
+    MessageForwardFromChatId,
+    /// 转发的源头 chat 的类型。
+    #[strum(serialize = "message.forward_from_chat.type")]
+    MessageForwardFromChatType,
+    /// 转发的源头 chat 的标题。
+    #[strum(serialize = "message.forward_from_chat.title")]
+    MessageForwardFromChatTitle,
+    /// 回复的目标消息。
+    #[strum(serialize = "message.reply_to_message")]
+    MessageReplyToMessage,
     /// 消息文本。
     #[strum(serialize = "message.text")]
     MessageText,
     /// 消息文本大小。
     #[strum(serialize = "message.text.size")]
     MessageTextSize,
-    /// 消息来源的姓。
-    #[strum(serialize = "message.from.first_name")]
-    MessageFromFirstName,
-    /// 消息来源是否为 bot。
-    #[strum(serialize = "message.from.is_bot")]
-    MessageFromIsBot,
+    /// 消息动画。
+    #[strum(serialize = "message.animation")]
+    MessageAnimation,
+    /// 消息动画的时长。
+    #[strum(serialize = "message.animation.duration")]
+    MessageAnimationDuration,
+    /// 消息动画的文件名。
+    #[strum(serialize = "message.animation.file_name")]
+    MessageAnimationFileName,
+    /// 消息动画的媒体类型。
+    #[strum(serialize = "message.animation.mime_type")]
+    MessageAnimationMimeType,
+    /// 消息动画的文件大小。
+    #[strum(serialize = "message.animation.file_size")]
+    MessageAnimationFileSize,
+    /// 消息音频。
+    #[strum(serialize = "message.audio")]
+    MessageAudio,
+    /// 消息音频的时长。
+    #[strum(serialize = "message.audio.duration")]
+    MessageAudioDuration,
+    /// 消息音频的表演者。
+    #[strum(serialize = "message.audio.performer")]
+    MessageAudioPerformer,
+    /// 消息音频的媒体类型。
+    #[strum(serialize = "message.audio.mime_type")]
+    MessageAudioMimeType,
+    /// 消息音频的文件大小。
+    #[strum(serialize = "message.audio.file_size")]
+    MessageAudioFileSize,
+    /// 消息的文档。
+    #[strum(serialize = "message.document")]
+    MessageDocument,
+    /// 消息文档的文件名。
+    #[strum(serialize = "message.document.file_name")]
+    MessageDocumentFileName,
+    /// 消息文档的媒体类型。
+    #[strum(serialize = "message.document.mime_type")]
+    MessageDocumentMimeType,
+    /// 消息文档的文件大小。
+    #[strum(serialize = "message.document.file_size")]
+    MessageDocumentFileSize,
+    /// 消息的图片。
+    #[strum(serialize = "message.photo")]
+    MessagePhoto,
+    /// 消息的贴纸。
+    #[strum(serialize = "message.sticker")]
+    MessageSticker,
+    /// 消息贴纸是否包含动画。
+    #[strum(serialize = "message.sticker.is_animated")]
+    MessageStickerIsAnimated,
+    /// 消息贴纸的 emoji 名称。
+    #[strum(serialize = "message.sticker.emoji")]
+    MessageStickerEmoji,
+    /// 消息贴纸的集合名称。
+    #[strum(serialize = "message.sticker.set_name")]
+    MessageStickerSetName,
+    /// 消息的视频。
+    #[strum(serialize = "message.video")]
+    MessageVideo,
+    /// 消息视频的时长。
+    #[strum(serialize = "message.video.duration")]
+    MessageVideoDuration,
+    /// 消息视频的媒体类型。
+    #[strum(serialize = "message.video.mime_type")]
+    MessageVideoMimeType,
+    /// 消息视频的文件大小。
+    #[strum(serialize = "message.video.file_size")]
+    MessageVideoFileSize,
+    /// 消息的语音。
+    #[strum(serialize = "message.voice")]
+    MessageVoice,
+    /// 消息语音的时长。
+    #[strum(serialize = "message.voice.duration")]
+    MessageVoiceDuration,
+    /// 消息语音的媒体类型。
+    #[strum(serialize = "message.voice.mime_type")]
+    MessageVoiceMimeType,
+    /// 消息语音的文件大小。
+    #[strum(serialize = "message.voice.file_size")]
+    MessageVoiceFileSize,
 }
 
 /// 条件操作符。
 #[derive(Debug, Eq, PartialEq, Copy, Clone, EnumString, ToString)]
 #[strum(serialize_all = "snake_case")]
 pub enum Operator {
-    // 等于。
+    /// 等于。
     Eq,
-    // 大于。
+    /// 大于。
     Gt,
-    // 小于。
+    /// 小于。
     Lt,
-    // 大于或等于。
+    /// 大于或等于。
     Ge,
-    // 小于或等于。
+    /// 小于或等于。
     Le,
     /// 属于其一。
     In,
@@ -169,6 +274,8 @@ pub enum Operator {
     Any,
     /// 包含全部。
     All,
+    /// 头部相等。
+    Hd,
 }
 
 pub trait RefSinleValue {
@@ -385,9 +492,12 @@ impl Cont {
             Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
             Field::MessageFromFirstName => match self.operator()? {
                 Operator::In => uofh!(message.from).first_name.in_ope(self.value()?),
+                Operator::Hd => uofh!(message.from).first_name.hd_ope(self.value()?),
 
                 _ => Err(unsupported_operator_err()?),
             },
+
+            field => Err(Error::FieldNotEndabled { field }),
         };
 
         match r {

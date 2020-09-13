@@ -5,6 +5,7 @@ use std::str::FromStr;
 use strum_macros::{EnumString, ToString};
 
 use super::error::Error;
+use super::falsey::UnwrapOrFalseyHosting;
 use super::models::Message;
 use super::operators::prelude::*;
 use super::result::Result;
@@ -338,15 +339,22 @@ impl Matcher {
 
 // 检查子字段是否为存在或为真。
 //
-// 第一个参数（父级）表达式为 `Option<T>` 类型，如果为 `None` 则返回 `false`。否则进一步判断。
-// 如果父级存在，将返回子级字段的 `is_truthy` 方法的调用结果。
+// 第一个参数为 `Option<T>` 类型。如果为 `None` 则返回 `false`，否则进一步判断。
+// 如果第一个参数存在值，将通过值访问子级字段并获取 `is_truthy` 方法的调用结果。
 macro_rules! child_is_truthy {
-    ($parent:expr, $field:tt) => {
-        if let Some(parent) = $parent {
-            parent.$field.is_truthy()
+    ($optinal:expr, $child:tt) => {
+        if let Some(parent) = $optinal {
+            parent.$child.is_truthy()
         } else {
             false
         }
+    };
+}
+
+// **u**nwrap_**o**r_**f**alsey_**h**osting
+macro_rules! uofh {
+    ($optinal:expr) => {
+        $optinal.unwrap_or_falsey_hosting()?
     };
 }
 
@@ -360,53 +368,44 @@ impl Cont {
         };
 
         let r = match self.field {
-            Field::MessageText => {
-                if let Some(text) = message.text.as_ref() {
-                    match self.operator()? {
-                        Operator::Eq => self.value()?.eq_ope(text),
-                        Operator::In => text.in_ope(self.value()?),
-                        Operator::Any => self.value()?.any_ope(text),
-                        Operator::All => self.value()?.all_ope(text),
-                        _ => Err(unsupported_operator_err()?),
-                    }
-                } else {
-                    Ok(false)
-                }
-            }
-            Field::MessageTextSize => {
-                if let Some(text) = message.text.as_ref() {
-                    match self.operator()? {
-                        Operator::Eq => self.value()?.eq_ope_for_target_len(text),
-                        Operator::Gt => self.value()?.gt_ope_for_target_len(text),
-                        Operator::Ge => self.value()?.ge_ope_for_target_len(text),
-                        Operator::Le => self.value()?.le_ope_for_target_len(text),
-                        _ => Err(unsupported_operator_err()?),
-                    }
-                } else {
-                    Ok(false)
-                }
-            }
+            Field::MessageText => match self.operator()? {
+                Operator::Eq => uofh!(message.text).eq_ope(self.value()?),
+                Operator::In => uofh!(message.text).in_ope(self.value()?),
+                Operator::Any => uofh!(message.text).any_ope(self.value()?),
+                Operator::All => uofh!(message.text).all_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageTextSize => match self.operator()? {
+                Operator::Eq => uofh!(message.text).eq_ope_for_content_len(self.value()?),
+                Operator::Gt => uofh!(message.text).gt_ope_for_content_len(self.value()?),
+                Operator::Ge => uofh!(message.text).ge_ope_for_content_len(self.value()?),
+                Operator::Le => uofh!(message.text).le_ope_for_content_len(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
             Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
             Field::MessageFromFirstName => match self.operator()? {
-                Operator::In => {
-                    if let Some(from) = message.from.as_ref() {
-                        from.first_name.in_ope(self.value()?)
-                    } else {
-                        Ok(false)
-                    }
-                }
+                Operator::In => uofh!(message.from).first_name.in_ope(self.value()?),
+
                 _ => Err(unsupported_operator_err()?),
             },
         };
 
-        if let Ok(no_negative_result) = r {
-            if self.is_negative {
-                Ok(!no_negative_result)
-            } else {
-                Ok(no_negative_result)
+        match r {
+            Ok(no_negative) => {
+                if self.is_negative {
+                    Ok(!no_negative)
+                } else {
+                    Ok(no_negative)
+                }
             }
-        } else {
-            r
+            Err(Error::FalsyValueHosting) => {
+                if self.is_negative {
+                    Ok(true)
+                } else {
+                    Ok(false)
+                }
+            }
+            e => e,
         }
     }
 }

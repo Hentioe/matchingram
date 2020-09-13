@@ -121,4 +121,8 @@ pub enum Error {
         #[from]
         source: serde_json::Error,
     },
+
+    /// 否定结果的托管，用于提前返回。一般会作为错误消息显示，也不表示错误。
+    #[error("falsey result returned early, showing this message may be a bug")]
+    FalsyValueHosting,
 }

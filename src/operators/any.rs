@@ -6,11 +6,11 @@ pub trait AnyOperator<T> {
     fn any_ope(&self, target: T) -> Result<bool>;
 }
 
-impl AnyOperator<&String> for Vec<Value> {
-    fn any_ope(&self, target: &String) -> Result<bool> {
+impl AnyOperator<&Vec<Value>> for String {
+    fn any_ope(&self, target: &Vec<Value>) -> Result<bool> {
         let mut result = false;
-        for v in self {
-            if target.contains(v.ref_a_str()?) {
+        for v in target {
+            if self.contains(v.ref_a_str()?) {
                 result = true;
                 break;
             }
@@ -19,10 +19,10 @@ impl AnyOperator<&String> for Vec<Value> {
         Ok(result)
     }
 }
-impl AnyOperator<Option<&String>> for Vec<Value> {
-    fn any_ope(&self, target: Option<&String>) -> Result<bool> {
-        if let Some(target_data) = target {
-            self.any_ope(target_data)
+impl AnyOperator<&Vec<Value>> for Option<String> {
+    fn any_ope(&self, target: &Vec<Value>) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.any_ope(target)
         } else {
             Ok(false)
         }

@@ -5,20 +5,20 @@ use crate::result::Result;
 pub trait GtOperator<T> {
     fn gt_ope(&self, target: T) -> Result<bool>;
 }
-pub trait GtOperatorForTargetLen<T> {
-    fn gt_ope_for_target_len(&self, target: T) -> Result<bool>;
+pub trait GtOperatorForContentLen<T> {
+    fn gt_ope_for_content_len(&self, target: T) -> Result<bool>;
 }
 
-impl GtOperator<i64> for Vec<Value> {
-    fn gt_ope(&self, target: i64) -> Result<bool> {
-        Ok(self.ref_a_decimal()? < &target)
+impl GtOperator<&Vec<Value>> for i64 {
+    fn gt_ope(&self, target: &Vec<Value>) -> Result<bool> {
+        Ok(self > target.ref_a_decimal()?)
     }
 }
 
-impl GtOperatorForTargetLen<&String> for Vec<Value> {
-    fn gt_ope_for_target_len(&self, target: &String) -> Result<bool> {
-        let len = target.chars().collect::<Vec<_>>().len();
+impl GtOperatorForContentLen<&Vec<Value>> for &String {
+    fn gt_ope_for_content_len(&self, target: &Vec<Value>) -> Result<bool> {
+        let self_len = self.chars().collect::<Vec<_>>().len() as i64;
 
-        Ok(self.ref_a_decimal()? < &(len as i64))
+        Ok(&self_len > target.ref_a_decimal()?)
     }
 }

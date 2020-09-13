@@ -6,11 +6,11 @@ pub trait AllOperator<T> {
     fn all_ope(&self, target: T) -> Result<bool>;
 }
 
-impl AllOperator<&String> for Vec<Value> {
-    fn all_ope(&self, target: &String) -> Result<bool> {
+impl AllOperator<&Vec<Value>> for String {
+    fn all_ope(&self, target: &Vec<Value>) -> Result<bool> {
         let mut result = true;
-        for v in self {
-            if !target.contains(v.ref_a_str()?) {
+        for v in target {
+            if !self.contains(v.ref_a_str()?) {
                 result = false;
                 break;
             }
@@ -19,10 +19,10 @@ impl AllOperator<&String> for Vec<Value> {
         Ok(result)
     }
 }
-impl AllOperator<Option<&String>> for Vec<Value> {
-    fn all_ope(&self, target: Option<&String>) -> Result<bool> {
-        if let Some(target_data) = target {
-            self.all_ope(target_data)
+impl AllOperator<&Vec<Value>> for Option<String> {
+    fn all_ope(&self, target: &Vec<Value>) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.all_ope(target)
         } else {
             Ok(false)
         }

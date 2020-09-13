@@ -24,6 +24,7 @@
 #![feature(min_specialization)]
 
 pub mod error;
+pub mod falsey;
 pub mod lexer;
 pub mod matcher;
 pub mod models;

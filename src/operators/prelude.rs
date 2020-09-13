@@ -2,8 +2,8 @@ pub use super::{
     all::AllOperator,
     any::AnyOperator,
     eq::EqOperator,
-    ge::{GeOperator, GeOperatorForTargetLen},
-    gt::{GtOperator, GtOperatorForTargetLen},
+    ge::{GeOperator, GeOperatorForContentLen},
+    gt::{GtOperator, GtOperatorForContentLen},
     in_::InOperator,
-    le::{LeOperator, LeOperatorForTargetLen},
+    le::{LeOperator, LeOperatorForContentLen},
 };

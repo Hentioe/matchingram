@@ -86,7 +86,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 
 ```
 (message.text.size gt 120 and message.from.is_bot) or
-(not message.from.is_bot and message.from.fullname any {"bot", "机器人"}) or
+(not message.from.is_bot and message.from.full_name any {"bot", "机器人"}) or
 (
   not message.from.id in {10086 10010} and
   message.text any {"移动", "联通"} and
@@ -171,7 +171,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.from.id`                 |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.from.is_bot`             |      |      |      |      |      |       |       |      |
 | `message.from.first_name`         |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
-| `message.from.fullname`           |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
+| `message.from.full_name`          |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
 | `message.from.language_code`      |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.forward_from_chat`       |      |      |      |      |      |       |       |      |
 | `message.forward_from_chat.id`    |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |

@@ -3,5 +3,6 @@ mod any;
 mod eq;
 mod ge;
 mod gt;
+mod in_;
 mod le;
 pub mod prelude;

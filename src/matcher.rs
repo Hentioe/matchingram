@@ -13,8 +13,9 @@ use super::truthy::IsTruthy;
 pub type Groups = Vec<Vec<Cont>>;
 
 pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
-    "message.text" =>  &[Operator::Eq, Operator::Any, Operator::All],
+    "message.text" =>  &[Operator::Eq, Operator::In, Operator::Any, Operator::All],
     "message.text.size" => &[Operator::Eq, Operator::Gt, Operator::Ge, Operator::Le],
+    "message.from.first_name" => &[Operator::Eq, Operator::In, Operator::Any, Operator::All],
     "message.from.is_bot" => &[]
 };
 
@@ -139,6 +140,9 @@ pub enum Field {
     /// 消息文本大小。
     #[strum(serialize = "message.text.size")]
     MessageTextSize,
+    /// 消息来源的姓。
+    #[strum(serialize = "message.from.first_name")]
+    MessageFromFirstName,
     /// 消息来源是否为 bot。
     #[strum(serialize = "message.from.is_bot")]
     MessageFromIsBot,
@@ -158,6 +162,8 @@ pub enum Operator {
     Ge,
     // 小于或等于。
     Le,
+    /// 属于其一。
+    In,
     /// 包含任意一个。
     Any,
     /// 包含全部。
@@ -358,6 +364,7 @@ impl Cont {
                 if let Some(text) = message.text.as_ref() {
                     match self.operator()? {
                         Operator::Eq => self.value()?.eq_ope(text),
+                        Operator::In => text.in_ope(self.value()?),
                         Operator::Any => self.value()?.any_ope(text),
                         Operator::All => self.value()?.all_ope(text),
                         _ => Err(unsupported_operator_err()?),
@@ -380,6 +387,16 @@ impl Cont {
                 }
             }
             Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
+            Field::MessageFromFirstName => match self.operator()? {
+                Operator::In => {
+                    if let Some(from) = message.from.as_ref() {
+                        from.first_name.in_ope(self.value()?)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                _ => Err(unsupported_operator_err()?),
+            },
         };
 
         if let Ok(no_negative_result) = r {

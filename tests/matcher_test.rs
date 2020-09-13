@@ -35,4 +35,10 @@ fn test_matcher() {
 
     let rule = r#"(message.text.size le 4)"#;
     assert!(!rule_match_json(rule, json_data).unwrap());
+
+    let rule = r#"(message.from.first_name in {"Java" "Rust"})"#;
+    assert!(rule_match_json(rule, json_data).unwrap());
+
+    let rule = r#"(message.from.first_name in {"Java" "Golang"})"#;
+    assert!(!rule_match_json(rule, json_data).unwrap());
 }

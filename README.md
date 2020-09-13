@@ -213,9 +213,9 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.dice.emoji`              |  ✓   |      |      |      |  ✓   |       |       |      |
 | `message.poll`                    |      |      |      |      |      |       |       |      |
 | `message.poll.type`               |  ✓   |      |      |      |  ✓   |       |       |      |
-| `message.vence`                   |      |      |      |      |      |       |       |      |
-| `message.vence.title`             |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.vence.address`           |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
+| `message.venue`                   |      |      |      |      |      |       |       |      |
+| `message.venue.title`             |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
+| `message.venue.address`           |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
 | `message.location`                |      |      |      |      |      |       |       |      |
 | `message.location.longitude`      |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.location.latitude`       |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |

@@ -147,31 +147,31 @@ pub enum Field {
     /// 消息来源的全名。
     #[strum(serialize = "message.from.full_name")]
     MessageFromFullName,
-    /// 消息来源语言代码。
+    /// 消息来源的语言代码。
     #[strum(serialize = "message.from.language_code")]
     MessageFromLanguageCode,
-    /// 转发的源头 chat。
+    /// 转发的源头。
     #[strum(serialize = "message.forward_from_chat")]
     MessageForwardFromChat,
-    /// 转发的源头 chat 的 ID。
+    /// 转发源头的 ID。
     #[strum(serialize = "message.forward_from_chat.id")]
     MessageForwardFromChatId,
-    /// 转发的源头 chat 的类型。
+    /// 转发源头的类型。
     #[strum(serialize = "message.forward_from_chat.type")]
     MessageForwardFromChatType,
-    /// 转发的源头 chat 的标题。
+    /// 转发源头的标题。
     #[strum(serialize = "message.forward_from_chat.title")]
     MessageForwardFromChatTitle,
     /// 回复的目标消息。
     #[strum(serialize = "message.reply_to_message")]
     MessageReplyToMessage,
-    /// 消息文本。
+    /// 消息的文本。
     #[strum(serialize = "message.text")]
     MessageText,
     /// 消息文本大小。
     #[strum(serialize = "message.text.size")]
     MessageTextSize,
-    /// 消息动画。
+    /// 消息的动画。
     #[strum(serialize = "message.animation")]
     MessageAnimation,
     /// 消息动画的时长。
@@ -186,7 +186,7 @@ pub enum Field {
     /// 消息动画的文件大小。
     #[strum(serialize = "message.animation.file_size")]
     MessageAnimationFileSize,
-    /// 消息音频。
+    /// 消息的音频。
     #[strum(serialize = "message.audio")]
     MessageAudio,
     /// 消息音频的时长。
@@ -252,6 +252,60 @@ pub enum Field {
     /// 消息语音的文件大小。
     #[strum(serialize = "message.voice.file_size")]
     MessageVoiceFileSize,
+    /// 附件（动画、音频、文档、照片、视频）的说明文字。
+    #[strum(serialize = "message.caption")]
+    MessageCaption,
+    // 附件说明文字的长度。
+    #[strum(serialize = "message.caption.len")]
+    MessageCaptionLen,
+    // 消息是一个骰子。
+    #[strum(serialize = "message.dice")]
+    MessageDice,
+    // 消息骰子的 emoji。
+    #[strum(serialize = "message.dice.emoji")]
+    MessageDiceEmoji,
+    // 消息是一个投票。
+    #[strum(serialize = "message.poll")]
+    MessagePoll,
+    // 消息投票的类型。
+    #[strum(serialize = "message.poll.type")]
+    MessagePollType,
+    // 消息是一个场地。
+    #[strum(serialize = "message.venue")]
+    MessageVenue,
+    // 消息场地的标题。
+    #[strum(serialize = "message.venue.title")]
+    MessageVenueTitle,
+    // 消息场地的地址。
+    #[strum(serialize = "message.venue.address")]
+    MessageVenueAddress,
+    // 消息是一个共享位置。
+    #[strum(serialize = "message.location")]
+    MessageLocation,
+    // 消息位置维度。
+    #[strum(serialize = "message.location.longitude")]
+    MessageLocationLongitude,
+    // 消息位置的经度。
+    #[strum(serialize = "message.location.latitude")]
+    MessageLocationLatitude,
+    // 消息中包含的新成员列表。
+    #[strum(serialize = "message.new_chat_members")]
+    MessageNewChatMembers,
+    // 消息中包含的新 chat 标题。
+    #[strum(serialize = "message.new_chat_title")]
+    MessageNewChatTitle,
+    // 消息中包含的新 chat 图片。
+    #[strum(serialize = "message.new_chat_photo")]
+    MessageNewChatPhoto,
+    // 消息中被置顶的消息。
+    #[strum(serialize = "message.pinned_message")]
+    MessagePinnedMessage,
+    // 消息是否为服务消息。
+    #[strum(serialize = "message.is_service_message")]
+    MessageIsServiceMessage,
+    // 消息是否为命令。
+    #[strum(serialize = "message.is_command")]
+    MessageIsCommand,
 }
 
 /// 条件操作符。

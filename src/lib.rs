@@ -40,6 +40,10 @@ pub use matcher::Matcher;
 use models::Message;
 use result::Result;
 
+use copies::def_hello_copies;
+
+def_hello_copies!();
+
 /// 使用规则表达式匹配消息。
 ///
 /// # 例子

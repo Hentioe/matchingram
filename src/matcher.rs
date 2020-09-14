@@ -1,6 +1,8 @@
 //! 消息匹配实现。
 
-use phf::phf_map;
+use lazy_static::lazy_static;
+use maplit::hashmap;
+use std::collections::HashMap;
 use std::str::FromStr;
 use strum_macros::{EnumString, ToString};
 
@@ -13,12 +15,19 @@ use super::truthy::IsTruthy;
 
 pub type Groups = Vec<Vec<Cont>>;
 
-pub static FIELD_OPERATORS: phf::Map<&'static str, &'static [Operator]> = phf_map! {
-    "message.text" =>  &[Operator::Eq, Operator::In, Operator::Any, Operator::All],
-    "message.text.size" => &[Operator::Eq, Operator::Gt, Operator::Ge, Operator::Le],
-    "message.from.first_name" => &[Operator::Eq, Operator::In, Operator::Any, Operator::All, Operator::Hd],
-    "message.from.is_bot" => &[]
-};
+lazy_static! {
+    static ref FIELD_OPERATORS: HashMap<&'static Field, &'static [Operator]> = {
+        use Field::*;
+        use Operator::*;
+
+        hashmap! {
+            &MessageText                => &[Eq, In, Any, All][..],
+            &MessageTextSize            => &[Eq, Gt, Ge, Le][..],
+            &MessageFromFirstName       => &[Eq, In, Any, All, Hd][..],
+            &MessageFromIsBot           => &[],
+        }
+    };
+}
 
 /// 匹配器。一般作为表达式的编译目标。
 ///
@@ -133,7 +142,7 @@ pub struct Cont {
 }
 
 /// 条件字段。
-#[derive(Debug, Copy, Clone, EnumString, ToString)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, EnumString, ToString)]
 pub enum Field {
     /// 消息来源 ID。
     #[strum(serialize = "message.from.id")]
@@ -417,7 +426,7 @@ impl Cont {
         })?;
 
         let operators = FIELD_OPERATORS
-            .get(field_str.as_str())
+            .get(&field)
             .copied()
             // 没有注册运算符列表，表示字段未启用。
             .ok_or(Error::FieldNotEndabled { field })?;
@@ -441,7 +450,7 @@ impl Cont {
         })?;
 
         let _operators = FIELD_OPERATORS
-            .get(field_str.as_str())
+            .get(&field)
             .copied()
             // 没有注册运算符列表，表示字段未启用。
             .ok_or(Error::FieldNotEndabled { field })?;

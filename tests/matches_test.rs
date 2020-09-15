@@ -6,6 +6,7 @@ fn test_matcher() {
         {
             "text": "我是五个字",
             "from": {
+                "id": 1000012,
                 "first_name": "Rust",
                 "is_bot": true
             }

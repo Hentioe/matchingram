@@ -569,6 +569,23 @@ impl Cont {
         };
 
         let r = match self.field {
+            Field::MessageFromId => match self.operator()? {
+                Operator::Eq => ufh!(message.from).id.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.from).id.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.from).id.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.from).id.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
+            Field::MessageFromFirstName => match self.operator()? {
+                Operator::Eq => ufh!(message.from).first_name.eq_ope(self.value()?),
+                Operator::In => ufh!(message.from).first_name.in_ope(self.value()?),
+                Operator::Any => ufh!(message.from).first_name.any_ope(self.value()?),
+                Operator::All => ufh!(message.from).first_name.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.from).first_name.hd_ope(self.value()?),
+
+                _ => Err(unsupported_operator_err()?),
+            },
             Field::MessageText => match self.operator()? {
                 Operator::Eq => ufh!(message.text).eq_ope(self.value()?),
                 Operator::In => ufh!(message.text).in_ope(self.value()?),
@@ -581,13 +598,6 @@ impl Cont {
                 Operator::Gt => ufh!(message.text).gt_ope_for_content_len(self.value()?),
                 Operator::Ge => ufh!(message.text).ge_ope_for_content_len(self.value()?),
                 Operator::Le => ufh!(message.text).le_ope_for_content_len(self.value()?),
-                _ => Err(unsupported_operator_err()?),
-            },
-            Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
-            Field::MessageFromFirstName => match self.operator()? {
-                Operator::In => ufh!(message.from).first_name.in_ope(self.value()?),
-                Operator::Hd => ufh!(message.from).first_name.hd_ope(self.value()?),
-
                 _ => Err(unsupported_operator_err()?),
             },
 

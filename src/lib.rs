@@ -26,7 +26,7 @@
 pub mod error;
 pub mod falsey;
 pub mod lexer;
-pub mod matcher;
+pub mod matches;
 pub mod models;
 pub mod ope;
 pub mod parser;
@@ -36,7 +36,7 @@ pub mod truthy;
 #[doc(inline)]
 pub use error::Error;
 #[doc(inline)]
-pub use matcher::Matcher;
+pub use matches::Matcher;
 use models::Message;
 use result::Result;
 

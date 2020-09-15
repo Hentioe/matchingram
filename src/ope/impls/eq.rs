@@ -1,5 +1,5 @@
 /// 运算符 `eq` 的 trait 和相关实现。
-use crate::matcher::{RefSingleValue, Values};
+use crate::matches::{RefSingleValue, Values};
 use crate::result::Result;
 
 pub trait EqOperator<T> {

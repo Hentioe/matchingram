@@ -36,7 +36,7 @@ lazy_static! {
 /// 每个匹配器对象都具备一个“条件组”序列。
 /// ```
 /// use matchingram::models::Message;
-/// use matchingram::matcher::*;
+/// use matchingram::matches::*;
 /// use matchingram::ope::Operator;
 ///
 /// // 手动创建一个匹配器对象：

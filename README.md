@@ -208,7 +208,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.voice.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |      |
 | `message.voice.file_size`         |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.caption`                 |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.caption.size`            |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
+| `message.caption.len`            |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.dice`                    |      |      |      |      |      |       |       |      |
 | `message.dice.emoji`              |  ✓   |      |      |      |  ✓   |       |       |      |
 | `message.poll`                    |      |      |      |      |      |       |       |      |

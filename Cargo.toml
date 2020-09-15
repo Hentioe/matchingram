@@ -14,7 +14,7 @@ name = "my_benchmark"
 harness = false
 
 [workspace]
-members = ["macros/copies"]
+members = ["macros/copies", "macros/copies-test"]
 
 [features]
 default = ["json"]
@@ -22,7 +22,6 @@ json = ["serde_json"]
 
 
 [dependencies]
-copies = { path = "macros/copies" }
 thiserror = "1.0"
 strum = "0.19"
 strum_macros = "0.19"

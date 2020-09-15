@@ -85,7 +85,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 一个五脏俱全的例子：
 
 ```
-(message.text.size gt 120 and message.from.is_bot) or
+(message.text.len gt 120 and message.from.is_bot) or
 (not message.from.is_bot and message.from.full_name any {"bot", "机器人"}) or
 (
   not message.from.id in {10086 10010} and
@@ -179,7 +179,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.forward_from_chat.title` |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
 | `message.reply_to_message`        |      |      |      |      |      |       |       |      |
 | `message.text`                    |  ✓   |      |      |      |  ✓   |   ✓   |   ✓   |  ✓   |
-| `message.text.size`               |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
+| `message.text.len`                |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.animation`               |      |      |      |      |      |       |       |      |
 | `message.animation.duration`      |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.animation.file_name`     |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
@@ -232,7 +232,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 
 1. 与 Telegram 官方消息结构一致的字段。这样的字段占了大多数，它们的含义也和真实数据中的对应字段相同。
 1. 以 `is_` 起头的字段。例如 `message.is_command`。除官方数据中也存在的之外，还特别新增了一些。它们一般可独立构成条件。
-1. 扩展的伪字段。这种字段表达的结构可能是错误的但逻辑能成立，例如 `message.text.size`。实际上在真实消息数据中 `text` 是一个字符串，不存在更具体的字段。这里的 `size` 可理解为对 `text` 内容的求总长操作。
+1. 扩展的伪字段。这种字段表达的结构可能是错误的但逻辑能成立，例如 `message.text.len`。实际上在真实消息数据中 `text` 是一个字符串，不存在更具体的字段。这里的 `len` 可理解为对 `text` 内容的求总长操作。
 
 #### 运算符说明
 

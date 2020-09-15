@@ -12,28 +12,28 @@ fn test_matcher() {
         }
     "#;
 
-    let rule = r#"(message.text.size eq 5)"#;
+    let rule = r#"(message.text.len eq 5)"#;
     assert!(rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size gt 4)"#;
+    let rule = r#"(message.text.len gt 4)"#;
     assert!(rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size gt 5)"#;
+    let rule = r#"(message.text.len gt 5)"#;
     assert!(!rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(not message.text.size gt 5)"#;
+    let rule = r#"(not message.text.len gt 5)"#;
     assert!(rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size ge 5)"#;
+    let rule = r#"(message.text.len ge 5)"#;
     assert!(rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size ge 6)"#;
+    let rule = r#"(message.text.len ge 6)"#;
     assert!(!rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size le 5)"#;
+    let rule = r#"(message.text.len le 5)"#;
     assert!(rule_match_json(rule, json_data).unwrap());
 
-    let rule = r#"(message.text.size le 4)"#;
+    let rule = r#"(message.text.len le 4)"#;
     assert!(!rule_match_json(rule, json_data).unwrap());
 
     let rule = r#"(message.from.first_name in {"Java" "Rust"})"#;

@@ -33,7 +33,7 @@ lazy_static! {
             &MessageForwardFromChatTitle    => &[][..],
             &MessageReplyToMessage          => &[][..],
             &MessageText                    => &[Eq, In, Any, All][..],
-            &MessageTextSize                => &[Eq, Gt, Ge, Le][..],
+            &MessageTextLen                 => &[Eq, Gt, Ge, Le][..],
             &MessageAnimation               => &[][..],
             &MessageAnimationDuration       => &[][..],
             &MessageAnimationFileName       => &[][..],
@@ -232,8 +232,8 @@ pub enum Field {
     #[strum(serialize = "message.text")]
     MessageText,
     /// 消息文本大小。
-    #[strum(serialize = "message.text.size")]
-    MessageTextSize,
+    #[strum(serialize = "message.text.len")]
+    MessageTextLen,
     /// 消息的动画。
     #[strum(serialize = "message.animation")]
     MessageAnimation,
@@ -575,7 +575,7 @@ impl Cont {
                 Operator::All => ufh!(message.text).all_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
-            Field::MessageTextSize => match self.operator()? {
+            Field::MessageTextLen => match self.operator()? {
                 Operator::Eq => ufh!(message.text).eq_ope_for_content_len(self.value()?),
                 Operator::Gt => ufh!(message.text).gt_ope_for_content_len(self.value()?),
                 Operator::Ge => ufh!(message.text).ge_ope_for_content_len(self.value()?),

@@ -1,13 +1,13 @@
 /// 运算符 `in` 的 trait 和相关实现。
-use crate::matcher::{RefSinleValue, Value};
+use crate::matcher::{RefSinleValue, Values};
 use crate::result::Result;
 
 pub trait InOperator<T> {
     fn in_ope(&self, target: T) -> Result<bool>;
 }
 
-impl InOperator<&Vec<Value>> for String {
-    fn in_ope(&self, target: &Vec<Value>) -> Result<bool> {
+impl InOperator<&Values> for String {
+    fn in_ope(&self, target: &Values) -> Result<bool> {
         let mut r = false;
 
         for v in target {
@@ -21,8 +21,8 @@ impl InOperator<&Vec<Value>> for String {
     }
 }
 
-impl InOperator<&Vec<Value>> for Option<&String> {
-    fn in_ope(&self, target: &Vec<Value>) -> Result<bool> {
+impl InOperator<&Values> for Option<&String> {
+    fn in_ope(&self, target: &Values) -> Result<bool> {
         if let Some(self_data) = *self {
             self_data.in_ope(target)
         } else {

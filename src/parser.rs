@@ -55,7 +55,7 @@
 
 use super::error::Error;
 use super::lexer::{Lexer, Position, Token};
-use super::matcher::{Cont, Groups as ContGroups, Matcher, Value};
+use super::matcher::{Cont, ContGroups, Matcher, Value};
 use super::result::Result;
 
 use derivative::Derivative;

@@ -13,7 +13,8 @@ use super::ope::{prelude::*, Operator};
 use super::result::Result;
 use super::truthy::IsTruthy;
 
-pub type Groups = Vec<Vec<Cont>>;
+pub type ContGroups = Vec<Vec<Cont>>;
+pub type Values = Vec<Value>;
 
 lazy_static! {
     static ref FIELD_OPERATORS: HashMap<&'static Field, &'static [Operator]> = {
@@ -94,7 +95,7 @@ lazy_static! {
 #[derive(Debug, Default)]
 pub struct Matcher {
     /// 条件组序列。
-    pub groups: Groups,
+    pub groups: ContGroups,
     // 上个组的匹配结果。
     is_last_match: bool,
 }
@@ -115,7 +116,7 @@ impl Matcher {
     }
 
     /// 使用条件组创建匹配器对象。
-    pub fn new(groups: Groups) -> Self {
+    pub fn new(groups: ContGroups) -> Self {
         Matcher {
             groups: groups,
             is_last_match: true,
@@ -139,7 +140,7 @@ pub struct Cont {
     /// 运算符。
     pub operator: Option<Operator>,
     /// 值。
-    pub value: Option<Vec<Value>>,
+    pub value: Option<Values>,
 }
 
 /// 条件字段。
@@ -361,7 +362,7 @@ impl RefSinleValue for Value {
     }
 }
 
-impl RefSinleValue for Vec<Value> {
+impl RefSinleValue for Values {
     fn ref_a_str(&self) -> Result<&str> {
         if let Some(first) = self.first() {
             first.ref_a_str()
@@ -391,7 +392,7 @@ impl Cont {
         is_negative: bool,
         field_str: String,
         operator_str: String,
-        value: Vec<Value>,
+        value: Values,
     ) -> Result<Self> {
         let operator =
             Operator::from_str(operator_str.as_str()).map_err(|_| Error::UnknownOperator {
@@ -448,7 +449,7 @@ impl Cont {
         }
     }
 
-    fn value(&self) -> Result<&Vec<Value>> {
+    fn value(&self) -> Result<&Values> {
         if let Some(value) = &self.value {
             Ok(value)
         } else {

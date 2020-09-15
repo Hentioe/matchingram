@@ -499,8 +499,8 @@ macro_rules! child_is_truthy {
     };
 }
 
-// **u**nwrap_**o**r_**f**alsey_**h**osting
-macro_rules! uofh {
+// unwrap_or_falsey_hosting
+macro_rules! ufh {
     ($optinal:expr) => {
         $optinal.unwrap_or_falsey_hosting()?
     };
@@ -517,23 +517,23 @@ impl Cont {
 
         let r = match self.field {
             Field::MessageText => match self.operator()? {
-                Operator::Eq => uofh!(message.text).eq_ope(self.value()?),
-                Operator::In => uofh!(message.text).in_ope(self.value()?),
-                Operator::Any => uofh!(message.text).any_ope(self.value()?),
-                Operator::All => uofh!(message.text).all_ope(self.value()?),
+                Operator::Eq => ufh!(message.text).eq_ope(self.value()?),
+                Operator::In => ufh!(message.text).in_ope(self.value()?),
+                Operator::Any => ufh!(message.text).any_ope(self.value()?),
+                Operator::All => ufh!(message.text).all_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageTextSize => match self.operator()? {
-                Operator::Eq => uofh!(message.text).eq_ope_for_content_len(self.value()?),
-                Operator::Gt => uofh!(message.text).gt_ope_for_content_len(self.value()?),
-                Operator::Ge => uofh!(message.text).ge_ope_for_content_len(self.value()?),
-                Operator::Le => uofh!(message.text).le_ope_for_content_len(self.value()?),
+                Operator::Eq => ufh!(message.text).eq_ope_for_content_len(self.value()?),
+                Operator::Gt => ufh!(message.text).gt_ope_for_content_len(self.value()?),
+                Operator::Ge => ufh!(message.text).ge_ope_for_content_len(self.value()?),
+                Operator::Le => ufh!(message.text).le_ope_for_content_len(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageFromIsBot => Ok(child_is_truthy!(&message.from, is_bot)),
             Field::MessageFromFirstName => match self.operator()? {
-                Operator::In => uofh!(message.from).first_name.in_ope(self.value()?),
-                Operator::Hd => uofh!(message.from).first_name.hd_ope(self.value()?),
+                Operator::In => ufh!(message.from).first_name.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.from).first_name.hd_ope(self.value()?),
 
                 _ => Err(unsupported_operator_err()?),
             },

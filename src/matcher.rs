@@ -319,7 +319,7 @@ pub enum Field {
     MessageIsCommand,
 }
 
-pub trait RefSinleValue {
+pub trait RefSingleValue {
     fn ref_a_str(&self) -> Result<&str>;
     fn ref_a_decimal(&self) -> Result<&i64>;
 }
@@ -338,7 +338,7 @@ impl ToString for Value {
     }
 }
 
-impl RefSinleValue for Value {
+impl RefSingleValue for Value {
     fn ref_a_str(&self) -> Result<&str> {
         use Value::*;
 
@@ -362,7 +362,7 @@ impl RefSinleValue for Value {
     }
 }
 
-impl RefSinleValue for Values {
+impl RefSingleValue for Values {
     fn ref_a_str(&self) -> Result<&str> {
         if let Some(first) = self.first() {
             first.ref_a_str()

@@ -1,5 +1,5 @@
 /// 运算符 `all` 的 trait 和相关实现。
-use crate::matcher::{RefSinleValue, Values};
+use crate::matcher::{RefSingleValue, Values};
 use crate::result::Result;
 
 pub trait AllOperator<T> {

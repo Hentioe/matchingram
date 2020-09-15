@@ -25,4 +25,6 @@ pub enum Operator {
     All,
     /// 头部相等。
     Hd,
+    // 尾部相等。
+    Td,
 }

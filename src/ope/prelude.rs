@@ -7,4 +7,5 @@ pub use super::{
     impls::hd::HdOperator,
     impls::in_::InOperator,
     impls::le::{LeOperator, LeOperatorForContentLen},
+    impls::td::TdOperator,
 };

@@ -16,6 +16,12 @@ impl EqOperator<&Values> for i64 {
     }
 }
 
+impl EqOperator<&Values> for i32 {
+    fn eq_ope(&self, target: &Values) -> Result<bool> {
+        (*self as i64).eq_ope(target)
+    }
+}
+
 impl EqOperator<&Values> for String {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
         Ok(*self == target.ref_a_str()?)

@@ -15,10 +15,26 @@ impl LeOperator<&Values> for i64 {
     }
 }
 
-impl LeOperatorForContentLen<&Values> for &String {
+impl LeOperator<&Values> for i32 {
+    fn le_ope(&self, target: &Values) -> Result<bool> {
+        (*self as i64).le_ope(target)
+    }
+}
+
+impl LeOperatorForContentLen<&Values> for String {
     fn le_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;
 
         Ok(&self_len <= target.ref_a_decimal()?)
+    }
+}
+
+impl LeOperatorForContentLen<&Values> for Option<String> {
+    fn le_ope_for_content_len(&self, target: &Values) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.le_ope_for_content_len(target)
+        } else {
+            Ok(false)
+        }
     }
 }

@@ -15,10 +15,26 @@ impl GeOperator<&Values> for i64 {
     }
 }
 
-impl GeOperatorForContentLen<&Values> for &String {
+impl GeOperator<&Values> for i32 {
+    fn ge_ope(&self, target: &Values) -> Result<bool> {
+        (*self as i64).ge_ope(target)
+    }
+}
+
+impl GeOperatorForContentLen<&Values> for String {
     fn ge_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;
 
         Ok(&self_len >= target.ref_a_decimal()?)
+    }
+}
+
+impl GeOperatorForContentLen<&Values> for Option<String> {
+    fn ge_ope_for_content_len(&self, target: &Values) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.ge_ope_for_content_len(target)
+        } else {
+            Ok(false)
+        }
     }
 }

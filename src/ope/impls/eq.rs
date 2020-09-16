@@ -22,6 +22,16 @@ impl EqOperator<&Values> for i32 {
     }
 }
 
+impl EqOperator<&Values> for Option<i32> {
+    fn eq_ope(&self, target: &Values) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.eq_ope(target)
+        } else {
+            Ok(false)
+        }
+    }
+}
+
 impl EqOperator<&Values> for String {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
         Ok(*self == target.ref_a_str()?)

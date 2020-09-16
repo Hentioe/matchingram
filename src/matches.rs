@@ -655,6 +655,14 @@ impl Cont {
                 Operator::Hd => ufh!(message.animation).mime_type.hd_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
+            Field::MessageAnimationFileSize => match self.operator()? {
+                Operator::Eq => ufh!(message.animation).file_size.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.animation).file_size.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.animation).file_size.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.animation).file_size.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageAudio => Ok(message.audio.is_truthy()),
 
             field => Err(Error::FieldNotEndabled { field }),
         };

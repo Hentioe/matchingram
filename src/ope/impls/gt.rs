@@ -21,6 +21,16 @@ impl GtOperator<&Values> for i32 {
     }
 }
 
+impl GtOperator<&Values> for Option<i32> {
+    fn gt_ope(&self, target: &Values) -> Result<bool> {
+        if let Some(self_data) = self {
+            self_data.gt_ope(target)
+        } else {
+            Ok(false)
+        }
+    }
+}
+
 impl GtOperatorForContentLen<&Values> for String {
     fn gt_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;

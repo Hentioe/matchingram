@@ -583,7 +583,40 @@ impl Cont {
                 Operator::Any => ufh!(message.from).first_name.any_ope(self.value()?),
                 Operator::All => ufh!(message.from).first_name.all_ope(self.value()?),
                 Operator::Hd => ufh!(message.from).first_name.hd_ope(self.value()?),
-
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageFromFullName => match self.operator()? {
+                Operator::Eq => ufh!(message.from).full_name().eq_ope(self.value()?),
+                Operator::In => ufh!(message.from).full_name().in_ope(self.value()?),
+                Operator::Any => ufh!(message.from).full_name().any_ope(self.value()?),
+                Operator::All => ufh!(message.from).full_name().all_ope(self.value()?),
+                Operator::Hd => ufh!(message.from).full_name().hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageFromLanguageCode => match self.operator()? {
+                Operator::Eq => ufh!(message.from).language_code.eq_ope(self.value()?),
+                Operator::In => ufh!(message.from).language_code.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.from).language_code.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageForwardFromChat => Ok(message.forward_from_chat.is_truthy()),
+            Field::MessageForwardFromChatId => match self.operator()? {
+                Operator::Eq => ufh!(message.forward_from_chat).id.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.forward_from_chat).id.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.forward_from_chat).id.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.forward_from_chat).id.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageForwardFromChatType => match self.operator()? {
+                Operator::Eq => ufh!(message.forward_from_chat).type_.eq_ope(self.value()?),
+                Operator::In => ufh!(message.forward_from_chat).type_.in_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageForwardFromChatTitle => match self.operator()? {
+                Operator::Eq => ufh!(message.forward_from_chat).title.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.forward_from_chat).title.any_ope(self.value()?),
+                Operator::All => ufh!(message.forward_from_chat).title.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.forward_from_chat).title.hd_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageText => match self.operator()? {

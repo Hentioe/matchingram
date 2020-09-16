@@ -85,6 +85,11 @@ pub struct User {
 /// This object represents a chat.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Chat {
+    /// Unique identifier for this chat. This number may be greater than 32 bits
+    /// and some programming languages may have difficulty/silent defects
+    /// in interpreting it. But it is smaller than 52 bits, so a signed 64 bit integer
+    /// or double-precision float type are safe for storing this identifier.
+    pub id: i64,
     /// Type of chat, can be either “private”, “group”, “supergroup” or “channel”.
     #[serde(rename = "type")]
     pub type_: String,
@@ -222,4 +227,15 @@ pub struct Venue {
 pub struct Location {
     pub longitude: f64,
     pub latitude: f64,
+}
+
+impl User {
+    pub fn full_name(&self) -> String {
+        let mut full_name = self.first_name.clone();
+        if let Some(last_name) = &self.last_name {
+            full_name.push_str(last_name);
+        }
+
+        full_name
+    }
 }

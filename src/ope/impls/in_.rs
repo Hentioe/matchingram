@@ -21,9 +21,9 @@ impl InOperator<&Values> for String {
     }
 }
 
-impl InOperator<&Values> for Option<&String> {
+impl InOperator<&Values> for Option<String> {
     fn in_ope(&self, target: &Values) -> Result<bool> {
-        if let Some(self_data) = *self {
+        if let Some(self_data) = self {
             self_data.in_ope(target)
         } else {
             Ok(false)

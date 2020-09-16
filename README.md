@@ -183,16 +183,16 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.animation`               |      |      |      |      |      |       |       |      |
 | `message.animation.duration`      |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.animation.file_name`     |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.animation.mime_type`     |  ✓   |      |      |      |  ✓   |       |       |      |
+| `message.animation.mime_type`     |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.animation.file_size`     |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.audio`                   |      |      |      |      |      |       |       |      |
 | `message.audio.duration`          |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.audio.performer`         |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.audio.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |      |
+| `message.audio.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.audio.file_size`         |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.document`                |      |      |      |      |      |       |       |      |
 | `message.document.file_name`      |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.document.mime_type`      |  ✓   |      |      |      |  ✓   |       |       |      |
+| `message.document.mime_type`      |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.document.file_size`      |  ✓   |  ✓   |  ✓   |      |      |       |       |      |
 | `message.photo`                   |      |      |      |      |      |       |       |      |
 | `message.sticker`                 |      |      |      |      |      |       |       |      |
@@ -201,14 +201,14 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.sticker.set_name`        |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
 | `message.video`                   |      |      |      |      |      |       |       |      |
 | `message.video.duration`          |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
-| `message.video.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |      |
+| `message.video.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.video.file_size`         |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.voice`                   |      |      |      |      |      |       |       |      |
 | `message.voice.duration`          |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
-| `message.voice.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |      |
+| `message.voice.mime_type`         |  ✓   |      |      |      |  ✓   |       |       |  ✓   |
 | `message.voice.file_size`         |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.caption`                 |  ✓   |      |      |      |      |   ✓   |   ✓   |  ✓   |
-| `message.caption.len`            |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
+| `message.caption.len`             |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.dice`                    |      |      |      |      |      |       |       |      |
 | `message.dice.emoji`              |  ✓   |      |      |      |  ✓   |       |       |      |
 | `message.poll`                    |      |      |      |      |      |       |       |      |

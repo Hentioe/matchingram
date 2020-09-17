@@ -14,7 +14,7 @@ name = "my_benchmark"
 harness = false
 
 [workspace]
-members = ["macros/copies", "macros/copies-test"]
+members = ["macros/auto-from", "macros/auto-from-test"]
 
 [features]
 default = ["json"]

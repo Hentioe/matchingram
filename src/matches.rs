@@ -663,6 +663,33 @@ impl Cont {
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageAudio => Ok(message.audio.is_truthy()),
+            Field::MessageAudioDuration => match self.operator()? {
+                Operator::Eq => ufh!(message.audio).duration.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.audio).duration.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.audio).duration.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.audio).duration.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageAudioPerformer => match self.operator()? {
+                Operator::Eq => ufh!(message.audio).performer.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.audio).performer.any_ope(self.value()?),
+                Operator::All => ufh!(message.audio).performer.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.audio).performer.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageAudioMimeType => match self.operator()? {
+                Operator::Eq => ufh!(message.audio).mime_type.eq_ope(self.value()?),
+                Operator::In => ufh!(message.audio).mime_type.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.audio).mime_type.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageAudioFileSize => match self.operator()? {
+                Operator::Eq => ufh!(message.audio).file_size.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.audio).file_size.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.audio).file_size.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.audio).file_size.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
 
             field => Err(Error::FieldNotEndabled { field }),
         };

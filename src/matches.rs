@@ -749,6 +749,27 @@ impl Cont {
                 Operator::Le => ufh!(message.video).file_size.le_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
+            Field::MessageVoice => Ok(message.voice.is_truthy()),
+            Field::MessageVoiceDuration => match self.operator()? {
+                Operator::Eq => ufh!(message.voice).duration.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.voice).duration.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.voice).duration.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.voice).duration.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVoiceMimeType => match self.operator()? {
+                Operator::Eq => ufh!(message.voice).mime_type.eq_ope(self.value()?),
+                Operator::In => ufh!(message.voice).mime_type.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.voice).mime_type.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVoiceFileSize => match self.operator()? {
+                Operator::Eq => ufh!(message.voice).file_size.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.voice).file_size.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.voice).file_size.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.voice).file_size.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
 
             field => Err(Error::FieldNotEndabled { field }),
         };

@@ -31,6 +31,12 @@ impl LeOperator<&Values> for Option<i32> {
     }
 }
 
+impl LeOperator<&Values> for f64 {
+    fn le_ope(&self, target: &Values) -> Result<bool> {
+        (*self as i64).le_ope(target)
+    }
+}
+
 impl LeOperatorForContentLen<&Values> for String {
     fn le_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;

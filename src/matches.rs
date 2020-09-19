@@ -784,8 +784,64 @@ impl Cont {
                 Operator::Le => message.caption.le_ope_for_content_len(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
-
-            field => Err(Error::FieldNotEndabled { field }),
+            Field::MessageDice => Ok(message.dice.is_truthy()),
+            Field::MessageDiceEmoji => match self.operator()? {
+                Operator::Eq => ufh!(message.dice).emoji.eq_ope(self.value()?),
+                Operator::In => ufh!(message.dice).emoji.in_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessagePoll => Ok(message.poll.is_truthy()),
+            Field::MessagePollType => match self.operator()? {
+                Operator::Eq => ufh!(message.poll).type_.eq_ope(self.value()?),
+                Operator::In => ufh!(message.poll).type_.in_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVenue => Ok(message.venue.is_truthy()),
+            Field::MessageVenueTitle => match self.operator()? {
+                Operator::Eq => ufh!(message.venue).title.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.venue).title.any_ope(self.value()?),
+                Operator::All => ufh!(message.venue).title.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.venue).title.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVenueAddress => match self.operator()? {
+                Operator::Eq => ufh!(message.venue).address.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.venue).address.any_ope(self.value()?),
+                Operator::All => ufh!(message.venue).address.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.venue).address.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageLocation => Ok(message.location.is_truthy()),
+            Field::MessageLocationLongitude => match self.operator()? {
+                Operator::Eq => ufh!(message.location).longitude.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.location).longitude.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.location).longitude.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.location).longitude.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageLocationLatitude => match self.operator()? {
+                Operator::Eq => ufh!(message.location).latitude.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.location).latitude.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.location).latitude.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.location).latitude.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageNewChatMembers => Ok(message.new_chat_members.is_truthy()),
+            Field::MessageNewChatTitle => Ok(message.new_chat_title.is_truthy()),
+            Field::MessageNewChatPhoto => Ok(message.new_chat_photo.is_truthy()),
+            Field::MessagePinnedMessage => Ok(message.pinned_message.is_truthy()),
+            Field::MessageIsServiceMessage => {
+                // TODO: 待实现。
+                Err(Error::FieldNotEndabled {
+                    field: Field::MessageIsServiceMessage,
+                })
+            }
+            Field::MessageIsCommand => {
+                // TODO: 待实现。
+                Err(Error::FieldNotEndabled {
+                    field: Field::MessageIsCommand,
+                })
+            } // field => Err(Error::FieldNotEndabled { field }),
         };
 
         match r {

@@ -22,6 +22,12 @@ impl EqOperator<&Values> for i32 {
     }
 }
 
+impl EqOperator<&Values> for f64 {
+    fn eq_ope(&self, target: &Values) -> Result<bool> {
+        Ok(*self == *target.ref_a_decimal()? as f64)
+    }
+}
+
 impl EqOperator<&Values> for Option<i32> {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
         if let Some(self_data) = self {

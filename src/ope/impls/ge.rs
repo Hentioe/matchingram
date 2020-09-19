@@ -31,6 +31,12 @@ impl GeOperator<&Values> for Option<i32> {
     }
 }
 
+impl GeOperator<&Values> for f64 {
+    fn ge_ope(&self, target: &Values) -> Result<bool> {
+        (*self as i64).ge_ope(target)
+    }
+}
+
 impl GeOperatorForContentLen<&Values> for String {
     fn ge_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;

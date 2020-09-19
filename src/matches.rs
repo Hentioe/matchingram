@@ -770,6 +770,20 @@ impl Cont {
                 Operator::Le => ufh!(message.voice).file_size.le_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
+            Field::MessageCaption => match self.operator()? {
+                Operator::Eq => message.caption.eq_ope(self.value()?),
+                Operator::In => message.caption.in_ope(self.value()?),
+                Operator::Any => message.caption.any_ope(self.value()?),
+                Operator::All => message.caption.all_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageCaptionLen => match self.operator()? {
+                Operator::Eq => message.caption.eq_ope_for_content_len(self.value()?),
+                Operator::Gt => message.caption.gt_ope_for_content_len(self.value()?),
+                Operator::Ge => message.caption.ge_ope_for_content_len(self.value()?),
+                Operator::Le => message.caption.le_ope_for_content_len(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
 
             field => Err(Error::FieldNotEndabled { field }),
         };

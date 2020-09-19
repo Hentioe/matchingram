@@ -690,6 +690,28 @@ impl Cont {
                 Operator::Le => ufh!(message.audio).file_size.le_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
+            Field::MessageDocument => Ok(message.document.is_truthy()),
+            Field::MessageDocumentFileName => match self.operator()? {
+                Operator::Eq => ufh!(message.document).file_name.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.document).file_name.any_ope(self.value()?),
+                Operator::All => ufh!(message.document).file_name.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.document).file_name.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageDocumentMimeType => match self.operator()? {
+                Operator::Eq => ufh!(message.document).mime_type.eq_ope(self.value()?),
+                Operator::In => ufh!(message.document).mime_type.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.document).mime_type.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageDocumentFileSize => match self.operator()? {
+                Operator::Eq => ufh!(message.document).file_size.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.document).file_size.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.document).file_size.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.document).file_size.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessagePhoto => Ok(message.photo.is_truthy()),
 
             field => Err(Error::FieldNotEndabled { field }),
         };

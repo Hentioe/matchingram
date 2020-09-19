@@ -712,6 +712,22 @@ impl Cont {
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessagePhoto => Ok(message.photo.is_truthy()),
+            Field::MessageSticker => Ok(message.sticker.is_truthy()),
+            Field::MessageStickerIsAnimated => {
+                Ok(child_is_truthy!(&message.sticker, is_animated).is_truthy())
+            }
+            Field::MessageStickerEmoji => match self.operator()? {
+                Operator::Eq => ufh!(message.sticker).emoji.eq_ope(self.value()?),
+                Operator::In => ufh!(message.sticker).emoji.in_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageStickerSetName => match self.operator()? {
+                Operator::Eq => ufh!(message.sticker).set_name.eq_ope(self.value()?),
+                Operator::Any => ufh!(message.sticker).set_name.any_ope(self.value()?),
+                Operator::All => ufh!(message.sticker).set_name.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.sticker).set_name.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
 
             field => Err(Error::FieldNotEndabled { field }),
         };

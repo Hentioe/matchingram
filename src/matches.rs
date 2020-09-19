@@ -728,6 +728,27 @@ impl Cont {
                 Operator::Hd => ufh!(message.sticker).set_name.hd_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
+            Field::MessageVideo => Ok(message.video.is_truthy()),
+            Field::MessageVideoDuration => match self.operator()? {
+                Operator::Eq => ufh!(message.video).duration.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.video).duration.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.video).duration.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.video).duration.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVideoMimeType => match self.operator()? {
+                Operator::Eq => ufh!(message.video).mime_type.eq_ope(self.value()?),
+                Operator::In => ufh!(message.video).mime_type.in_ope(self.value()?),
+                Operator::Hd => ufh!(message.video).mime_type.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageVideoFileSize => match self.operator()? {
+                Operator::Eq => ufh!(message.video).file_size.eq_ope(self.value()?),
+                Operator::Gt => ufh!(message.video).file_size.gt_ope(self.value()?),
+                Operator::Ge => ufh!(message.video).file_size.ge_ope(self.value()?),
+                Operator::Le => ufh!(message.video).file_size.le_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
 
             field => Err(Error::FieldNotEndabled { field }),
         };

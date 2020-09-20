@@ -74,6 +74,7 @@ lazy_static! {
             &MessageLocationLongitude       => &[Eq, Gt, Ge, Le][..],
             &MessageLocationLatitude        => &[Eq, Gt, Ge, Le][..],
             &MessageNewChatMembers          => &[][..],
+            &MessageLeftChatMember          => &[][..],
             &MessageNewChatTitle            => &[][..],
             &MessageNewChatPhoto            => &[][..],
             &MessagePinnedMessage           => &[][..],
@@ -214,154 +215,157 @@ pub enum Field {
     /// 消息来源的语言代码。
     #[strum(serialize = "message.from.language_code")]
     MessageFromLanguageCode,
-    /// 转发的源头。
+    /// 消息来自转发。
     #[strum(serialize = "message.forward_from_chat")]
     MessageForwardFromChat,
-    /// 转发源头的 ID。
+    /// 消息的转发源头 ID。
     #[strum(serialize = "message.forward_from_chat.id")]
     MessageForwardFromChatId,
-    /// 转发源头的类型。
+    /// 消息的转发源头类型。
     #[strum(serialize = "message.forward_from_chat.type")]
     MessageForwardFromChatType,
-    /// 转发源头的标题。
+    /// 消息的转发源头标题。
     #[strum(serialize = "message.forward_from_chat.title")]
     MessageForwardFromChatTitle,
-    /// 回复的目标消息。
+    /// 消息是对其它消息的回复。
     #[strum(serialize = "message.reply_to_message")]
     MessageReplyToMessage,
-    /// 消息的文本。
+    /// 消息中包含文本。
     #[strum(serialize = "message.text")]
     MessageText,
-    /// 消息文本大小。
+    /// 消息中包含的文本大小。
     #[strum(serialize = "message.text.len")]
     MessageTextLen,
-    /// 消息的动画。
+    /// 消息中包含动画。
     #[strum(serialize = "message.animation")]
     MessageAnimation,
-    /// 消息动画的时长。
+    /// 消息中的动画时长。
     #[strum(serialize = "message.animation.duration")]
     MessageAnimationDuration,
-    /// 消息动画的文件名。
+    /// 消息中的动画的文件名。
     #[strum(serialize = "message.animation.file_name")]
     MessageAnimationFileName,
-    /// 消息动画的媒体类型。
+    /// 消息中的动画的媒体类型。
     #[strum(serialize = "message.animation.mime_type")]
     MessageAnimationMimeType,
-    /// 消息动画的文件大小。
+    /// 消息中的动画的文件大小。
     #[strum(serialize = "message.animation.file_size")]
     MessageAnimationFileSize,
-    /// 消息的音频。
+    /// 消息中包含音频。
     #[strum(serialize = "message.audio")]
     MessageAudio,
-    /// 消息音频的时长。
+    /// 消息中的音频的时长。
     #[strum(serialize = "message.audio.duration")]
     MessageAudioDuration,
-    /// 消息音频的表演者。
+    /// 消息中的音频的表演者。
     #[strum(serialize = "message.audio.performer")]
     MessageAudioPerformer,
-    /// 消息音频的媒体类型。
+    /// 消息中音频的媒体类型。
     #[strum(serialize = "message.audio.mime_type")]
     MessageAudioMimeType,
-    /// 消息音频的文件大小。
+    /// 消息中音频的文件大小。
     #[strum(serialize = "message.audio.file_size")]
     MessageAudioFileSize,
-    /// 消息的文档。
+    /// 消息中包含文档。
     #[strum(serialize = "message.document")]
     MessageDocument,
-    /// 消息文档的文件名。
+    /// 消息中文档的文件名。
     #[strum(serialize = "message.document.file_name")]
     MessageDocumentFileName,
-    /// 消息文档的媒体类型。
+    /// 消息中文档的媒体类型。
     #[strum(serialize = "message.document.mime_type")]
     MessageDocumentMimeType,
-    /// 消息文档的文件大小。
+    /// 消息中文档的文件大小。
     #[strum(serialize = "message.document.file_size")]
     MessageDocumentFileSize,
-    /// 消息的图片。
+    /// 消息中包含图片。
     #[strum(serialize = "message.photo")]
     MessagePhoto,
-    /// 消息的贴纸。
+    /// 消息中包含贴纸。
     #[strum(serialize = "message.sticker")]
     MessageSticker,
-    /// 消息贴纸是否包含动画。
+    /// 消息中的贴纸是否为动画。
     #[strum(serialize = "message.sticker.is_animated")]
     MessageStickerIsAnimated,
-    /// 消息贴纸的 emoji 名称。
+    /// 消息中的贴纸的 emoji 名称。
     #[strum(serialize = "message.sticker.emoji")]
     MessageStickerEmoji,
-    /// 消息贴纸的集合名称。
+    /// 消息中的贴纸的集合名称。
     #[strum(serialize = "message.sticker.set_name")]
     MessageStickerSetName,
-    /// 消息的视频。
+    /// 消息中包含视频。
     #[strum(serialize = "message.video")]
     MessageVideo,
-    /// 消息视频的时长。
+    /// 消息中的视频的时长。
     #[strum(serialize = "message.video.duration")]
     MessageVideoDuration,
-    /// 消息视频的媒体类型。
+    /// 消息中的视频的媒体类型。
     #[strum(serialize = "message.video.mime_type")]
     MessageVideoMimeType,
-    /// 消息视频的文件大小。
+    /// 消息中的视频的文件大小。
     #[strum(serialize = "message.video.file_size")]
     MessageVideoFileSize,
-    /// 消息的语音。
+    /// 消息中包含语音。
     #[strum(serialize = "message.voice")]
     MessageVoice,
-    /// 消息语音的时长。
+    /// 消息中的语音的时长。
     #[strum(serialize = "message.voice.duration")]
     MessageVoiceDuration,
-    /// 消息语音的媒体类型。
+    /// 消息中的语音的媒体类型。
     #[strum(serialize = "message.voice.mime_type")]
     MessageVoiceMimeType,
-    /// 消息语音的文件大小。
+    /// 消息中的语音的文件大小。
     #[strum(serialize = "message.voice.file_size")]
     MessageVoiceFileSize,
-    /// 附件（动画、音频、文档、照片、视频）的说明文字。
+    /// 消息中包含附件（动画、音频、文档、照片、视频）的说明文字。
     #[strum(serialize = "message.caption")]
     MessageCaption,
-    // 附件说明文字的长度。
+    // 消息中的附件的说明文字的长度。
     #[strum(serialize = "message.caption.len")]
     MessageCaptionLen,
-    // 消息是一个骰子。
+    // 消息中包含骰子。
     #[strum(serialize = "message.dice")]
     MessageDice,
-    // 消息骰子的 emoji。
+    // 消息中的骰子的 emoji。
     #[strum(serialize = "message.dice.emoji")]
     MessageDiceEmoji,
-    // 消息是一个投票。
+    // 消息中包含投票。
     #[strum(serialize = "message.poll")]
     MessagePoll,
-    // 消息投票的类型。
+    // 消息中的投票的类型。
     #[strum(serialize = "message.poll.type")]
     MessagePollType,
-    // 消息是一个场地。
+    // 消息包含场地。
     #[strum(serialize = "message.venue")]
     MessageVenue,
-    // 消息场地的标题。
+    // 消息中的场地的标题。
     #[strum(serialize = "message.venue.title")]
     MessageVenueTitle,
-    // 消息场地的地址。
+    // 消息中的场地的地址。
     #[strum(serialize = "message.venue.address")]
     MessageVenueAddress,
-    // 消息是一个共享位置。
+    // 消息包含共享位置。
     #[strum(serialize = "message.location")]
     MessageLocation,
-    // 消息位置维度。
+    // 消息中的位置的维度。
     #[strum(serialize = "message.location.longitude")]
     MessageLocationLongitude,
-    // 消息位置的经度。
+    // 消息中的位置的经度。
     #[strum(serialize = "message.location.latitude")]
     MessageLocationLatitude,
-    // 消息中包含的新成员列表。
+    // 消息中包含新成员。
     #[strum(serialize = "message.new_chat_members")]
     MessageNewChatMembers,
-    // 消息中包含的新 chat 标题。
+    // 消息中包含已退出（包括被移除）的成员。
+    #[strum(serialize = "message.left_chat_member")]
+    MessageLeftChatMember,
+    // 消息中包含新群组标题。
     #[strum(serialize = "message.new_chat_title")]
     MessageNewChatTitle,
-    // 消息中包含的新 chat 图片。
+    // 消息中包含新群组图片。
     #[strum(serialize = "message.new_chat_photo")]
     MessageNewChatPhoto,
-    // 消息中被置顶的消息。
+    // 消息中包含被置顶的消息。
     #[strum(serialize = "message.pinned_message")]
     MessagePinnedMessage,
     // 消息是否为服务消息。
@@ -827,21 +831,25 @@ impl Cont {
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageNewChatMembers => Ok(message.new_chat_members.is_truthy()),
+            Field::MessageLeftChatMember => Ok(message.left_chat_member.is_truthy()),
             Field::MessageNewChatTitle => Ok(message.new_chat_title.is_truthy()),
             Field::MessageNewChatPhoto => Ok(message.new_chat_photo.is_truthy()),
             Field::MessagePinnedMessage => Ok(message.pinned_message.is_truthy()),
-            Field::MessageIsServiceMessage => {
-                // TODO: 待实现。
-                Err(Error::FieldNotEndabled {
-                    field: Field::MessageIsServiceMessage,
-                })
-            }
+            Field::MessageIsServiceMessage => Ok(
+                message.new_chat_members.is_truthy() || // 加入成员
+                message.left_chat_member.is_truthy() || // 离开成员
+                message.new_chat_title.is_truthy() || // 新标题
+                message.new_chat_photo.is_truthy() || // 新头像
+                message.pinned_message.is_truthy() // 置顶消息
+            ),
             Field::MessageIsCommand => {
                 // TODO: 待实现。
                 Err(Error::FieldNotEndabled {
                     field: Field::MessageIsCommand,
                 })
-            } // field => Err(Error::FieldNotEndabled { field }),
+            }
+            //
+            // field => Err(Error::FieldNotEndabled { field }),
         };
 
         match r {

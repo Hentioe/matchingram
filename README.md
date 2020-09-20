@@ -220,6 +220,7 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 | `message.location.longitude`      |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.location.latitude`       |  ✓   |  ✓   |  ✓   |  ✓   |      |       |       |      |
 | `message.new_chat_members`        |      |      |      |      |      |       |       |      |
+| `message.left_chat_member`        |      |      |      |      |      |       |       |      |
 | `message.new_chat_title`          |      |      |      |      |      |       |       |      |
 | `message.new_chat_photo`          |      |      |      |      |      |       |       |      |
 | `message.pinned_message`          |      |      |      |      |      |       |       |      |

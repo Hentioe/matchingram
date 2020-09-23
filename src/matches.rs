@@ -842,11 +842,17 @@ impl Cont {
                 message.new_chat_photo.is_truthy() || // 新头像
                 message.pinned_message.is_truthy() // 置顶消息
             ),
-            Field::MessageIsCommand => {
-                // TODO: 待实现。
-                Err(Error::FieldNotEndabled {
-                    field: Field::MessageIsCommand,
-                })
+            Field::MessageIsCommand => if let Some(entities) = &message.entities {
+                for entity in entities {
+                    if entity.type_ == "bot_command" && entity.offset == 0 {
+                        return Ok(true)
+                    }
+
+                }
+
+                Ok(false)
+            } else {
+                Ok(false)
             }
             //
             // field => Err(Error::FieldNotEndabled { field }),

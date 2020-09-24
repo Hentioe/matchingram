@@ -76,6 +76,9 @@ pub enum Token {
     Quote, // "
     /// 文字值。
     Letter,
+    /// 整数（暂未使用）
+    Integer,
+    // TODO: 即将被 `Integer` 替代，并作为表达小数的 token。
     /// 十进制数字值。
     Decimal,
     /// and 关键字。

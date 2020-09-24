@@ -180,7 +180,7 @@ impl Matcher {
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    Decimal(i64),
+    Integer(i64),
     Letter(String),
 }
 
@@ -378,10 +378,10 @@ pub enum Field {
 
 pub trait RefSingleValue {
     fn ref_a_str(&self) -> Result<&str>;
-    fn ref_a_decimal(&self) -> Result<&i64>;
+    fn ref_an_integer(&self) -> Result<&i64>;
 }
-pub trait RefADecimal {
-    fn ref_a_decimal(&self) -> Result<&i64>;
+pub trait RefAnInteger {
+    fn ref_an_integer(&self) -> Result<&i64>;
 }
 
 impl ToString for Value {
@@ -390,7 +390,7 @@ impl ToString for Value {
 
         match self {
             Letter(v) => v.to_owned(),
-            Decimal(v) => v.to_string(),
+            Integer(v) => v.to_string(),
         }
     }
 }
@@ -401,20 +401,20 @@ impl RefSingleValue for Value {
 
         match self {
             Letter(v) => Ok(v),
-            Decimal(_) => Err(Error::NotAString {
+            Integer(_) => Err(Error::NotAString {
                 value: self.clone(),
             }),
         }
     }
 
-    fn ref_a_decimal(&self) -> Result<&i64> {
+    fn ref_an_integer(&self) -> Result<&i64> {
         use Value::*;
 
         match self {
-            Letter(_) => Err(Error::NotADecimal {
+            Letter(_) => Err(Error::NotAnInteger {
                 value: self.clone(),
             }),
-            Decimal(v) => Ok(v),
+            Integer(v) => Ok(v),
         }
     }
 }
@@ -428,9 +428,9 @@ impl RefSingleValue for Values {
         }
     }
 
-    fn ref_a_decimal(&self) -> Result<&i64> {
+    fn ref_an_integer(&self) -> Result<&i64> {
         if let Some(first) = self.first() {
-            first.ref_a_decimal()
+            first.ref_an_integer()
         } else {
             Err(Error::RefValueInEmptyList)
         }

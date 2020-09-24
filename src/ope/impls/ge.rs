@@ -11,7 +11,7 @@ pub trait GeOperatorForContentLen<T> {
 
 impl GeOperator<&Values> for i64 {
     fn ge_ope(&self, target: &Values) -> Result<bool> {
-        Ok(self >= target.ref_a_decimal()?)
+        Ok(self >= target.ref_an_integer()?)
     }
 }
 
@@ -41,7 +41,7 @@ impl GeOperatorForContentLen<&Values> for String {
     fn ge_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;
 
-        Ok(&self_len >= target.ref_a_decimal()?)
+        Ok(&self_len >= target.ref_an_integer()?)
     }
 }
 

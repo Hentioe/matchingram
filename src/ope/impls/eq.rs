@@ -12,7 +12,7 @@ pub trait EqOperatorForContentLen<T> {
 
 impl EqOperator<&Values> for i64 {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
-        Ok(*self == *target.ref_a_decimal()?)
+        Ok(*self == *target.ref_an_integer()?)
     }
 }
 
@@ -24,7 +24,7 @@ impl EqOperator<&Values> for i32 {
 
 impl EqOperator<&Values> for f64 {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
-        Ok(*self == *target.ref_a_decimal()? as f64)
+        Ok(*self == *target.ref_an_integer()? as f64)
     }
 }
 
@@ -58,7 +58,7 @@ impl EqOperatorForContentLen<&Values> for String {
     fn eq_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let len = self.chars().collect::<Vec<_>>().len();
 
-        Ok(target.ref_a_decimal()? == &(len as i64))
+        Ok(target.ref_an_integer()? == &(len as i64))
     }
 }
 

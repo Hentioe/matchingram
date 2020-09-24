@@ -76,10 +76,9 @@ pub enum Token {
     Quote, // "
     /// 文字值。
     Letter,
-    /// 整数（暂未使用）
+    /// 整数。
     Integer,
-    // TODO: 即将被 `Integer` 替代，并作为表达小数的 token。
-    /// 十进制数字值。
+    /// 小数（暂未使用）。
     Decimal,
     /// and 关键字。
     And, // and
@@ -176,7 +175,7 @@ impl<'a> Lexer<'a> {
                         }
                     }
                     _ => {
-                        if !self.scan_keywords()? && !self.scan_decimal()? {
+                        if !self.scan_keywords()? && !self.scan_integer()? {
                             return Err(Error::ParseFailed {
                                 column: self.pos + 1,
                             });
@@ -227,16 +226,16 @@ impl<'a> Lexer<'a> {
     }
 
     // 扫描数字。
-    fn scan_decimal(&mut self) -> Result<bool> {
+    fn scan_integer(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
         let mut end_pos = begin_pos;
 
-        while self.at_char(end_pos).is_decimal() {
+        while self.at_char(end_pos).is_integer() {
             end_pos += 1;
         }
 
         let end_char = self.at_char(end_pos);
-        let is_decimal = end_pos > begin_pos
+        let is_integer = end_pos > begin_pos
             // 检查是否合法结束
             && (end_char.is_white_space() || match end_char {
                 Some(&'}') => true,
@@ -244,10 +243,10 @@ impl<'a> Lexer<'a> {
                 _ => false,
             });
 
-        if is_decimal {
+        if is_integer {
             self.scan_at(end_pos - 1);
             self.push_token_position(
-                Token::Decimal,
+                Token::Integer,
                 Position {
                     begin: begin_pos,
                     end: end_pos,
@@ -554,8 +553,8 @@ trait IsWhiteSpace {
     fn is_white_space(self) -> bool;
 }
 
-trait IsDecimal {
-    fn is_decimal(self) -> bool;
+trait IsInteger {
+    fn is_integer(self) -> bool;
 }
 
 impl IsWhiteSpace for Option<&char> {
@@ -568,8 +567,8 @@ impl IsWhiteSpace for Option<&char> {
     }
 }
 
-impl IsDecimal for Option<&char> {
-    fn is_decimal(self) -> bool {
+impl IsInteger for Option<&char> {
+    fn is_integer(self) -> bool {
         if let Some(c) = self {
             c.is_digit(10)
         } else {

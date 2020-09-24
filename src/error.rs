@@ -99,9 +99,9 @@ pub enum Error {
     #[error("the {index:?}th token data is missing")]
     MissingTokenData { index: usize },
 
-    /// 数字转换出错。
+    /// 整数转换出错。
     #[error("error in conversion of numbers starting in column {column:?}")]
-    DecimalParseFailed { column: usize },
+    IntegerParseFailed { column: usize },
 
     /// 解析失败。
     #[error("failed to parse from column {column:?}")]
@@ -110,8 +110,8 @@ pub enum Error {
     #[error("the value `{}` is not a string", value.to_string())]
     NotAString { value: Value },
 
-    #[error("the value `{}` is not a decimal number", value.to_string())]
-    NotADecimal { value: Value },
+    #[error("the value `{}` is not an integer number", value.to_string())]
+    NotAnInteger { value: Value },
 
     #[error("cannot reference value in empty list")]
     RefValueInEmptyList,

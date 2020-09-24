@@ -8,7 +8,7 @@
 //! 未取反条件 -> <字段> <运算符> 值表示
 //! 值表示 -> 单值表示 | 多值表示
 //! 多值表示 -> <{> 单值表示 单值表示 ... <}>
-//! 单值表示 -> <"> <letter> <"> | <decimal>
+//! 单值表示 -> <"> <letter> <"> | <integer> | <decimal>
 //! 可选条件列表 -> <and> 条件 可选条件列表 | <空>
 //! 可选条件组列表 -> <or> 条件组 可选条件组列表 | <空>
 //! ```
@@ -247,15 +247,15 @@ impl<'a> Parser<'a> {
     fn prase_single_value(&mut self) -> Result<Value> {
         let position = self.current_position()?;
 
-        if self.ct == Some(&Token::Decimal) {
+        if self.ct == Some(&Token::Integer) {
             let value_data = self.at_data(self.pos)?;
             let value_string = value_data.iter().collect::<String>();
-            let value_decimal =
-                i64::from_str_radix(&value_string, 10).map_err(|_| Error::DecimalParseFailed {
+            let value_integer =
+                i64::from_str_radix(&value_string, 10).map_err(|_| Error::IntegerParseFailed {
                     column: position.begin,
                 })?;
 
-            return Ok(Value::Decimal(value_decimal));
+            return Ok(Value::Integer(value_integer));
         }
 
         if self.ct == Some(&Token::Quote)

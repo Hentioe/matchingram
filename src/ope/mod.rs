@@ -1,7 +1,15 @@
 use strum_macros::{EnumString, ToString};
 
-pub mod impls;
+pub mod all;
+pub mod any;
+pub mod eq;
+pub mod ge;
+pub mod gt;
+pub mod hd;
+pub mod in_;
+pub mod le;
 pub mod prelude;
+pub mod td;
 
 /// 运算符。
 #[derive(Debug, Eq, PartialEq, Copy, Clone, EnumString, ToString)]

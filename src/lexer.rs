@@ -107,6 +107,8 @@ pub struct Lexer<'a> {
     positions: Vec<Position>,
     // 是否处在引号内部。
     is_inside_quote: bool,
+    // 是否是数字中间的第一个点
+    is_existed_dot: bool,
 }
 
 #[derive(Debug)]
@@ -125,6 +127,7 @@ impl<'a> Lexer<'a> {
             tokens: vec![],
             positions: vec![],
             is_inside_quote: false,
+            is_existed_dot: false,
         }
     }
 
@@ -175,7 +178,10 @@ impl<'a> Lexer<'a> {
                         }
                     }
                     _ => {
-                        if !self.scan_keywords()? && !self.scan_integer()? {
+                        if !self.scan_keywords()?
+                            && !self.scan_integer()?
+                            && !self.scan_decimal()?
+                        {
                             return Err(Error::ParseFailed {
                                 column: self.pos + 1,
                             });
@@ -247,6 +253,57 @@ impl<'a> Lexer<'a> {
             self.scan_at(end_pos - 1);
             self.push_token_position(
                 Token::Integer,
+                Position {
+                    begin: begin_pos,
+                    end: end_pos,
+                },
+            );
+
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    // TODO: 将小数和整数扫描合并，避免重复扫描提高性能
+    // 扫描小数
+    fn scan_decimal(&mut self) -> Result<bool> {
+        let begin_pos = self.pos;
+        let mut end_pos = begin_pos;
+
+        let mut is_valid_char = |pos| {
+            let cc = self.at_char(pos);
+
+            if cc.is_integer() {
+                true
+            } else if cc == Some(&'.') && pos != begin_pos && !self.is_existed_dot {
+                self.is_existed_dot = true;
+
+                true
+            } else {
+                false
+            }
+        };
+
+        while is_valid_char(end_pos) {
+            end_pos += 1;
+        }
+
+        self.is_existed_dot = false;
+
+        let end_char = self.at_char(end_pos);
+        let is_decimal = end_pos > begin_pos && end_char != Some(&'.')
+            // 检查是否合法结束
+            && (end_char.is_white_space() || match end_char {
+                Some(&'}') => true,
+                Some(&')') => true,
+                _ => false,
+            });
+
+        if is_decimal {
+            self.scan_at(end_pos - 1);
+            self.push_token_position(
+                Token::Decimal,
                 Position {
                     begin: begin_pos,
                     end: end_pos,

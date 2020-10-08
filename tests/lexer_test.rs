@@ -32,7 +32,7 @@ fn test_lexer() {
 
 #[test]
 fn test_lex_decimal() {
-    let rule = r#"(message.longitude gt 1920.1080) or (message.latitude gt 1440.1080)"#;
+    let rule = r#"(message.longitude gt 1920.1080)"#;
     let input = rule.chars().collect::<Vec<_>>();
 
     let mut lexer = Lexer::new(&input);
@@ -44,12 +44,6 @@ fn test_lex_decimal() {
         (Operator, String::from("gt")),
         (Decimal, String::from("1920.1080")),
         (CloseParenthesis, String::from(")")),
-        (Or, String::from("or")),
-        (OpenParenthesis, String::from("(")),
-        (Field, String::from("message.latitude")),
-        (Operator, String::from("gt")),
-        (Decimal, String::from("1440.1080")),
-        (CloseParenthesis, String::from(")")),
         (EOF, String::from("")),
     ];
 
@@ -57,4 +51,23 @@ fn test_lex_decimal() {
     for (i, mapping) in lexer.token_data_owner().unwrap().into_iter().enumerate() {
         assert_eq!(truthy[i], mapping);
     }
+
+    // TODO: 下面的错误 assertions 还需要保证字段的值。
+    let rule = r#"(message.longitude gt .1920.1080)"#;
+    let input = rule.chars().collect::<Vec<_>>();
+    let mut lexer = Lexer::new(&input);
+
+    assert!(lexer.tokenize().is_err());
+
+    let rule = r#"(message.longitude gt 19201080.)"#;
+    let input = rule.chars().collect::<Vec<_>>();
+    let mut lexer = Lexer::new(&input);
+
+    assert!(lexer.tokenize().is_err());
+
+    let rule = r#"(message.longitude gt 1920.108.0)"#;
+    let input = rule.chars().collect::<Vec<_>>();
+    let mut lexer = Lexer::new(&input);
+
+    assert!(lexer.tokenize().is_err());
 }

@@ -106,9 +106,7 @@ pub struct Lexer<'a> {
     // 位置序列。
     positions: Vec<Position>,
     // 是否处在引号内部。
-    is_inside_quote: bool,
-    // 是否是数字中间的第一个点
-    is_existed_dot: bool,
+    is_inside_quotes: bool,
 }
 
 #[derive(Debug)]
@@ -126,8 +124,7 @@ impl<'a> Lexer<'a> {
             current_char: input.get(0),
             tokens: vec![],
             positions: vec![],
-            is_inside_quote: false,
-            is_existed_dot: false,
+            is_inside_quotes: false,
         }
     }
 
@@ -166,9 +163,9 @@ impl<'a> Lexer<'a> {
                     '{' => self.push_token(Token::OpenBrace)?,
                     '}' => self.push_token(Token::CloseBrace)?,
                     '"' => {
-                        self.is_inside_quote = !self.is_inside_quote;
+                        self.is_inside_quotes = !self.is_inside_quotes;
                         self.push_token(Token::Quote)?;
-                        if self.is_inside_quote {
+                        if self.is_inside_quotes {
                             self.scan();
                             if !self.scan_letter()? {
                                 return Err(Error::MissingQuote {
@@ -270,14 +267,15 @@ impl<'a> Lexer<'a> {
     fn scan_decimal(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
         let mut end_pos = begin_pos;
+        let mut is_existed_dot = false;
 
         let mut is_valid_char = |pos| {
             let cc = self.at_char(pos);
 
             if cc.is_integer() {
                 true
-            } else if cc == Some(&'.') && pos != begin_pos && !self.is_existed_dot {
-                self.is_existed_dot = true;
+            } else if cc == Some(&'.') && pos != begin_pos && !is_existed_dot {
+                is_existed_dot = true;
 
                 true
             } else {
@@ -289,10 +287,8 @@ impl<'a> Lexer<'a> {
             end_pos += 1;
         }
 
-        self.is_existed_dot = false;
-
         let end_char = self.at_char(end_pos);
-        let is_decimal = end_pos > begin_pos && end_char != Some(&'.')
+        let is_decimal = end_pos > begin_pos && self.at_char(end_pos - 1) != Some(&'.')
             // 检查是否合法结束
             && (end_char.is_white_space() || match end_char {
                 Some(&'}') => true,
@@ -319,7 +315,7 @@ impl<'a> Lexer<'a> {
     // 扫描字面值（字符串）
     fn scan_letter(&mut self) -> Result<bool> {
         // 如果不在引号内部，则不扫描。
-        if !self.is_inside_quote {
+        if !self.is_inside_quotes {
             return Ok(false);
         }
 

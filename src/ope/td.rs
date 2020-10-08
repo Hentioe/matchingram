@@ -1,5 +1,5 @@
 /// 运算符 `td` 的 trait 和相关实现。
-use crate::matches::{RefSingleValue, Values};
+use crate::matches::{GetSingleValue, Values};
 use crate::result::Result;
 
 pub trait TdOperator<T> {
@@ -8,7 +8,7 @@ pub trait TdOperator<T> {
 
 impl TdOperator<&Values> for String {
     fn td_ope(&self, target: &Values) -> Result<bool> {
-        Ok(self.ends_with(target.ref_a_str()?))
+        Ok(self.ends_with(target.get_a_str_ref()?))
     }
 }
 impl TdOperator<&Values> for Option<String> {

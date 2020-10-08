@@ -100,8 +100,12 @@ pub enum Error {
     MissingTokenData { index: usize },
 
     /// 整数转换出错。
-    #[error("error in conversion of numbers starting in column {column:?}")]
+    #[error("error in conversion of integer numbers starting in column {column:?}")]
     IntegerParseFailed { column: usize },
+
+    /// 小数转换出错。
+    #[error("error in conversion of decimal numbers starting in column {column:?}")]
+    DecimalParseFailed { column: usize },
 
     /// 解析失败。
     #[error("failed to parse from column {column:?}")]
@@ -112,6 +116,9 @@ pub enum Error {
 
     #[error("the value `{}` is not an integer number", value.to_string())]
     NotAnInteger { value: Value },
+
+    #[error("the value `{}` is not a decimal number", value.to_string())]
+    NotADecimal { value: Value },
 
     #[error("cannot reference value in empty list")]
     RefValueInEmptyList,

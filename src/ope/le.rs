@@ -1,5 +1,5 @@
 /// 运算符 `le` 的 trait 和相关实现。
-use crate::matches::{RefSingleValue, Values};
+use crate::matches::{GetSingleValue, Values};
 use crate::result::Result;
 
 pub trait LeOperator<T> {
@@ -11,7 +11,7 @@ pub trait LeOperatorForContentLen<T> {
 
 impl LeOperator<&Values> for i64 {
     fn le_ope(&self, target: &Values) -> Result<bool> {
-        Ok(self <= target.ref_an_integer()?)
+        Ok(*self <= target.get_an_integer()?)
     }
 }
 
@@ -33,7 +33,7 @@ impl LeOperator<&Values> for Option<i32> {
 
 impl LeOperator<&Values> for f64 {
     fn le_ope(&self, target: &Values) -> Result<bool> {
-        (*self as i64).le_ope(target)
+        Ok(*self <= target.get_a_decimal()?)
     }
 }
 
@@ -41,7 +41,7 @@ impl LeOperatorForContentLen<&Values> for String {
     fn le_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let self_len = self.chars().collect::<Vec<_>>().len() as i64;
 
-        Ok(&self_len <= target.ref_an_integer()?)
+        Ok(self_len <= target.get_an_integer()?)
     }
 }
 

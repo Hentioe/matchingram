@@ -244,9 +244,11 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // 解析单个值
     fn prase_single_value(&mut self) -> Result<Value> {
         let position = self.current_position()?;
 
+        // 转换整数
         if self.ct == Some(&Token::Integer) {
             let value_data = self.at_data(self.pos)?;
             let value_string = value_data.iter().collect::<String>();
@@ -256,6 +258,21 @@ impl<'a> Parser<'a> {
                 })?;
 
             return Ok(Value::Integer(value_integer));
+        }
+
+        // TODO: 缺乏包含小数值的解析测试。
+        // 转换小数
+        if self.ct == Some(&Token::Decimal) {
+            let value_data = self.at_data(self.pos)?;
+            let string_value = value_data.iter().collect::<String>();
+            let decimal_value =
+                string_value
+                    .parse::<f64>()
+                    .map_err(|_| Error::DecimalParseFailed {
+                        column: position.begin,
+                    })?;
+
+            return Ok(Value::Decimal(decimal_value));
         }
 
         if self.ct == Some(&Token::Quote)

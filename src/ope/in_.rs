@@ -1,5 +1,5 @@
 /// 运算符 `in` 的 trait 和相关实现。
-use crate::matches::{RefSingleValue, Values};
+use crate::matches::{GetSingleValue, Values};
 use crate::result::Result;
 
 pub trait InOperator<T> {
@@ -11,7 +11,7 @@ impl InOperator<&Values> for String {
         let mut r = false;
 
         for v in target {
-            if v.ref_a_str()? == self {
+            if v.get_a_str_ref()? == self {
                 r = true;
                 break;
             }

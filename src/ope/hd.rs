@@ -1,5 +1,5 @@
 /// 运算符 `hd` 的 trait 和相关实现。
-use crate::matches::{RefSingleValue, Values};
+use crate::matches::{GetSingleValue, Values};
 use crate::result::Result;
 
 pub trait HdOperator<T> {
@@ -8,7 +8,7 @@ pub trait HdOperator<T> {
 
 impl HdOperator<&Values> for String {
     fn hd_ope(&self, target: &Values) -> Result<bool> {
-        Ok(self.starts_with(target.ref_a_str()?))
+        Ok(self.starts_with(target.get_a_str_ref()?))
     }
 }
 impl HdOperator<&Values> for Option<String> {

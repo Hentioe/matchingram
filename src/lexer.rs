@@ -78,7 +78,7 @@ pub enum Token {
     Letter,
     /// 整数。
     Integer,
-    /// 小数（暂未使用）。
+    /// 小数。
     Decimal,
     /// and 关键字。
     And, // and

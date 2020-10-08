@@ -1,5 +1,5 @@
 /// 运算符 `eq` 的 trait 和相关实现。
-use crate::matches::{RefSingleValue, Values};
+use crate::matches::{GetSingleValue, Values};
 use crate::result::Result;
 
 pub trait EqOperator<T> {
@@ -12,7 +12,7 @@ pub trait EqOperatorForContentLen<T> {
 
 impl EqOperator<&Values> for i64 {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
-        Ok(*self == *target.ref_an_integer()?)
+        Ok(*self == target.get_an_integer()?)
     }
 }
 
@@ -24,7 +24,7 @@ impl EqOperator<&Values> for i32 {
 
 impl EqOperator<&Values> for f64 {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
-        Ok(*self == *target.ref_an_integer()? as f64)
+        Ok(*self == target.get_a_decimal()?)
     }
 }
 
@@ -40,7 +40,7 @@ impl EqOperator<&Values> for Option<i32> {
 
 impl EqOperator<&Values> for String {
     fn eq_ope(&self, target: &Values) -> Result<bool> {
-        Ok(*self == target.ref_a_str()?)
+        Ok(*self == target.get_a_str_ref()?)
     }
 }
 
@@ -58,7 +58,7 @@ impl EqOperatorForContentLen<&Values> for String {
     fn eq_ope_for_content_len(&self, target: &Values) -> Result<bool> {
         let len = self.chars().collect::<Vec<_>>().len();
 
-        Ok(target.ref_an_integer()? == &(len as i64))
+        Ok(target.get_an_integer()? == len as i64)
     }
 }
 

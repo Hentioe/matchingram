@@ -180,8 +180,9 @@ impl Matcher {
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    Integer(i64),
     Letter(String),
+    Integer(i64),
+    Decimal(f64),
 }
 
 /// 单个条件。
@@ -376,9 +377,10 @@ pub enum Field {
     MessageIsCommand,
 }
 
-pub trait RefSingleValue {
-    fn ref_a_str(&self) -> Result<&str>;
-    fn ref_an_integer(&self) -> Result<&i64>;
+pub trait GetSingleValue {
+    fn get_a_str_ref(&self) -> Result<&str>;
+    fn get_an_integer(&self) -> Result<i64>;
+    fn get_a_decimal(&self) -> Result<f64>;
 }
 pub trait RefAnInteger {
     fn ref_an_integer(&self) -> Result<&i64>;
@@ -391,46 +393,67 @@ impl ToString for Value {
         match self {
             Letter(v) => v.to_owned(),
             Integer(v) => v.to_string(),
+            Decimal(v) => v.to_string(),
         }
     }
 }
 
-impl RefSingleValue for Value {
-    fn ref_a_str(&self) -> Result<&str> {
+impl GetSingleValue for Value {
+    fn get_a_str_ref(&self) -> Result<&str> {
         use Value::*;
 
         match self {
             Letter(v) => Ok(v),
-            Integer(_) => Err(Error::NotAString {
+            _ => Err(Error::NotAString {
                 value: self.clone(),
             }),
         }
     }
 
-    fn ref_an_integer(&self) -> Result<&i64> {
+    fn get_an_integer(&self) -> Result<i64> {
         use Value::*;
 
         match self {
-            Letter(_) => Err(Error::NotAnInteger {
+            Integer(v) => Ok(*v),
+            _ => Err(Error::NotAnInteger {
                 value: self.clone(),
             }),
-            Integer(v) => Ok(v),
+        }
+    }
+
+    fn get_a_decimal(&self) -> Result<f64> {
+        use Value::*;
+
+        match self {
+            Decimal(v) => Ok(*v),
+            Integer(v) => Ok(*v as f64),
+            _ => Err(Error::NotADecimal {
+                value: self.clone(),
+            }),
         }
     }
 }
 
-impl RefSingleValue for Values {
-    fn ref_a_str(&self) -> Result<&str> {
+impl GetSingleValue for Values {
+    fn get_a_str_ref(&self) -> Result<&str> {
         if let Some(first) = self.first() {
-            first.ref_a_str()
+            first.get_a_str_ref()
         } else {
             Err(Error::RefValueInEmptyList)
         }
     }
 
-    fn ref_an_integer(&self) -> Result<&i64> {
+    fn get_an_integer(&self) -> Result<i64> {
         if let Some(first) = self.first() {
-            first.ref_an_integer()
+            first.get_an_integer()
+        } else {
+            Err(Error::RefValueInEmptyList)
+        }
+    }
+
+    fn get_a_decimal(&self) -> Result<f64> {
+        if let Some(first) = self.first() {
+            first.get_a_decimal()
         } else {
             Err(Error::RefValueInEmptyList)
         }

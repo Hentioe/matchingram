@@ -97,10 +97,10 @@ type Input = [char];
 pub struct Lexer<'a> {
     /// 输入。
     pub input: &'a Input,
-    // 当前指针。
+    // 当前指针位置。
     pos: usize,
     // 当前字符。
-    current_char: Option<&'a char>,
+    cc: Option<&'a char>,
     // 全部的 Token。
     tokens: Vec<Token>,
     // 位置序列。
@@ -121,7 +121,7 @@ impl<'a> Lexer<'a> {
         Self {
             input: input,
             pos: 0,
-            current_char: input.get(0),
+            cc: input.get(0),
             tokens: vec![],
             positions: vec![],
             is_inside_quotes: false,
@@ -140,9 +140,9 @@ impl<'a> Lexer<'a> {
 
     /// 将输入转换为 token 序列。
     pub fn tokenize(&mut self) -> Result<()> {
-        while self.current_char.is_some() {
+        while self.cc.is_some() {
             self.skip_white_space();
-            if let Some(cc) = self.current_char {
+            if let Some(cc) = self.cc {
                 match cc {
                     '(' => {
                         self.push_token(Token::OpenParenthesis)?;
@@ -197,7 +197,7 @@ impl<'a> Lexer<'a> {
 
     // 扫描关键字。
     fn scan_keywords(&mut self) -> Result<bool> {
-        if let Some(cc) = self.current_char {
+        if let Some(cc) = self.cc {
             match cc {
                 'a' => {
                     if self.tokenize_and()? {
@@ -415,7 +415,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn scan_field(&mut self) -> Result<bool> {
-        if self.current_char == Some(&'n') && self.tokenize_not()? {
+        if self.cc == Some(&'n') && self.tokenize_not()? {
             self.scan();
             self.skip_white_space();
         }
@@ -449,7 +449,7 @@ impl<'a> Lexer<'a> {
         let mut cur_pos = begin_pos;
         let mut end_char = self.at_char(cur_pos);
 
-        if self.current_char == Some(&'a') && self.is_and_keywords() {
+        if self.cc == Some(&'a') && self.is_and_keywords() {
             return Ok(false);
         }
 
@@ -506,17 +506,17 @@ impl<'a> Lexer<'a> {
     // 扫描下一个字符并自增指针位置。
     fn scan(&mut self) -> Option<&char> {
         self.pos += 1;
-        self.current_char = self.input.get(self.pos);
+        self.cc = self.input.get(self.pos);
 
-        self.current_char
+        self.cc
     }
 
     // 回退一个字符并自减指针位置。
     fn back(&mut self) -> Option<&char> {
         self.pos -= 1;
-        self.current_char = self.input.get(self.pos);
+        self.cc = self.input.get(self.pos);
 
-        self.current_char
+        self.cc
     }
 
     // 访问指定位置的字符。此方法不移动位置。
@@ -527,15 +527,15 @@ impl<'a> Lexer<'a> {
     // 扫描指定位置的字符。此方法将改变指针位置。
     fn scan_at(&mut self, pos: usize) -> Option<&char> {
         self.pos = pos;
-        self.current_char = self.input.get(self.pos);
+        self.cc = self.input.get(self.pos);
 
-        self.current_char
+        self.cc
     }
 
     // 跳过空白字符。返回跳过的字符数量。
     fn skip_white_space(&mut self) -> usize {
         let mut begin_pos = self.pos;
-        while self.current_char.is_white_space() {
+        while self.cc.is_white_space() {
             self.scan();
             begin_pos += 1;
         }

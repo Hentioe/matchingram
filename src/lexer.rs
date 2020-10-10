@@ -312,6 +312,14 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    // 扫描数字
+    // 包括整数、小数
+    // TODO: 此方法将替换 `scan_integer` 和 `scan_decimal` 方法
+    fn _scan_number() -> Result<bool> {
+        // TODO: 待实现
+        Ok(false)
+    }
+
     // 扫描字面值（字符串）
     fn scan_letter(&mut self) -> Result<bool> {
         // 如果不在引号内部，则不扫描。

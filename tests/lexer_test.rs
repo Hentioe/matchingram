@@ -31,8 +31,8 @@ fn test_lexer() {
 }
 
 #[test]
-fn test_lex_decimal() {
-    let rule = r#"(message.longitude gt 1920.1080)"#;
+fn test_lex_number() {
+    let rule = r#"(message.longitude gt 1920.1080) or (message.text.len ge 120)"#;
     let input = rule.chars().collect::<Vec<_>>();
 
     let mut lexer = Lexer::new(&input);
@@ -44,6 +44,12 @@ fn test_lex_decimal() {
         (Operator, String::from("gt")),
         (Decimal, String::from("1920.1080")),
         (CloseParenthesis, String::from(")")),
+        (Or, String::from("or")),
+        (OpenParenthesis, String::from("(")),
+        (Field, String::from("message.text.len")),
+        (Operator, String::from("ge")),
+        (Integer, String::from("120")),
+        (CloseParenthesis, String::from(")")),
         (EOF, String::from("")),
     ];
 
@@ -51,6 +57,22 @@ fn test_lex_decimal() {
     for (i, mapping) in lexer.token_data_owner().unwrap().into_iter().enumerate() {
         assert_eq!(truthy[i], mapping);
     }
+
+    // 测试带符号的数字解析。
+    let rule = r#"(message.longitude gt -1920.1080) or (message.from.id gt -100001)"#;
+    let input = rule.chars().collect::<Vec<_>>();
+    let mut lexer = Lexer::new(&input);
+
+    lexer.tokenize().unwrap();
+
+    assert_eq!(
+        Some(&(Decimal, "-1920.1080".to_owned())),
+        lexer.token_data_owner().unwrap().get(3)
+    );
+    assert_eq!(
+        Some(&(Integer, "-100001".to_owned())),
+        lexer.token_data_owner().unwrap().get(9)
+    );
 
     // TODO: 下面的错误 assertions 还需要保证字段的值。
     let rule = r#"(message.longitude gt .1920.1080)"#;

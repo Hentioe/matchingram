@@ -86,7 +86,7 @@ pub enum Token {
     Or, // or
     /// not 关键字。
     Not, // not
-    /// 结束
+    /// 结束。
     EOF,
 }
 
@@ -225,19 +225,19 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // 扫描数字
-    // 包括整数、小数
-    // TODO: 支持符合扫描（负数）。
+    // 扫描数字。
+    // 包括整数、小数。
     fn scan_number(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
-        let mut end_pos = begin_pos;
+        let signed = self.at_char(begin_pos) == Some(&'-');
+        let mut end_pos = if signed { begin_pos + 1 } else { begin_pos };
 
         while self.at_char(end_pos).is_integer() {
             end_pos += 1;
         }
 
         let end_char = self.at_char(end_pos);
-        let is_integer = end_pos > begin_pos
+        let is_integer = end_pos > if signed {begin_pos + 1} else {begin_pos}
             // 检查是否合法结束
             && (end_char.is_white_space() || match end_char {
                 Some(&'}') => true,

@@ -87,11 +87,11 @@ _此处不再详细举例，更多例子可参考[实际案例](#实际案例)�
 
 ```
 (message.text.len gt 120 and message.from.is_bot) or
-(not message.from.is_bot and message.from.full_name any {"bot", "机器人"}) or
+(not message.from.is_bot and message.from.full_name any {"bot" "机器人"}) or
 (
   not message.from.id in {10086 10010} and
-  message.text any {"移动", "联通"} and
-  message.text any {"我是", "客服"}
+  message.text any {"移动" "联通"} and
+  message.text any {"我是" "客服"}
 )
 ```
 

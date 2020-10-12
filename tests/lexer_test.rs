@@ -74,22 +74,27 @@ fn test_lex_number() {
         lexer.token_data_owner().unwrap().get(9)
     );
 
-    // TODO: 下面的错误 assertions 还需要保证字段的值。
     let rule = r#"(message.longitude gt .1920.1080)"#;
     let input = rule.chars().collect::<Vec<_>>();
     let mut lexer = Lexer::new(&input);
+    let r = lexer.tokenize();
 
-    assert!(lexer.tokenize().is_err());
+    assert!(r.is_err());
+    assert_eq!("failed to parse from column 23", r.unwrap_err().to_string());
 
     let rule = r#"(message.longitude gt 19201080.)"#;
     let input = rule.chars().collect::<Vec<_>>();
     let mut lexer = Lexer::new(&input);
+    let r = lexer.tokenize();
 
-    assert!(lexer.tokenize().is_err());
+    assert!(r.is_err());
+    assert_eq!("failed to parse from column 23", r.unwrap_err().to_string());
 
     let rule = r#"(message.longitude gt 1920.108.0)"#;
     let input = rule.chars().collect::<Vec<_>>();
     let mut lexer = Lexer::new(&input);
+    let r = lexer.tokenize();
 
-    assert!(lexer.tokenize().is_err());
+    assert!(r.is_err());
+    assert_eq!("failed to parse from column 23", r.unwrap_err().to_string());
 }

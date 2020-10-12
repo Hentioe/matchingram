@@ -178,7 +178,7 @@ impl Matcher {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     Letter(String),
     Integer(i64),

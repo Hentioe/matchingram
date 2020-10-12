@@ -175,10 +175,7 @@ impl<'a> Lexer<'a> {
                         }
                     }
                     _ => {
-                        if !self.scan_keywords()?
-                            && !self.scan_integer()?
-                            && !self.scan_decimal()?
-                        {
+                        if !self.scan_keywords()? && !self.scan_number()? {
                             return Err(Error::ParseFailed {
                                 column: self.pos + 1,
                             });
@@ -228,8 +225,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // 扫描数字。
-    fn scan_integer(&mut self) -> Result<bool> {
+    // 扫描数字
+    // 包括整数、小数
+    // TODO: 支持符合扫描（负数）。
+    fn scan_number(&mut self) -> Result<bool> {
         let begin_pos = self.pos;
         let mut end_pos = begin_pos;
 
@@ -257,38 +256,16 @@ impl<'a> Lexer<'a> {
             );
 
             Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
+        } else if end_char == Some(&'.') {
+            // 可能是小数
+            let mut con_pos = end_pos + 1; // 继续扫描的位置
 
-    // TODO: 将小数和整数扫描合并，避免重复扫描提高性能
-    // 扫描小数
-    fn scan_decimal(&mut self) -> Result<bool> {
-        let begin_pos = self.pos;
-        let mut end_pos = begin_pos;
-        let mut is_existed_dot = false;
-
-        let mut is_valid_char = |pos| {
-            let cc = self.at_char(pos);
-
-            if cc.is_integer() {
-                true
-            } else if cc == Some(&'.') && pos != begin_pos && !is_existed_dot {
-                is_existed_dot = true;
-
-                true
-            } else {
-                false
+            while self.at_char(con_pos).is_integer() {
+                con_pos += 1;
             }
-        };
 
-        while is_valid_char(end_pos) {
-            end_pos += 1;
-        }
-
-        let end_char = self.at_char(end_pos);
-        let is_decimal = end_pos > begin_pos && self.at_char(end_pos - 1) != Some(&'.')
+            let end_char = self.at_char(con_pos);
+            let is_decimal = con_pos > end_pos + 1
             // 检查是否合法结束
             && (end_char.is_white_space() || match end_char {
                 Some(&'}') => true,
@@ -296,28 +273,23 @@ impl<'a> Lexer<'a> {
                 _ => false,
             });
 
-        if is_decimal {
-            self.scan_at(end_pos - 1);
-            self.push_token_position(
-                Token::Decimal,
-                Position {
-                    begin: begin_pos,
-                    end: end_pos,
-                },
-            );
+            if is_decimal {
+                self.scan_at(con_pos - 1);
+                self.push_token_position(
+                    Token::Decimal,
+                    Position {
+                        begin: begin_pos,
+                        end: con_pos,
+                    },
+                );
 
-            Ok(true)
+                Ok(true)
+            } else {
+                Ok(false)
+            }
         } else {
             Ok(false)
         }
-    }
-
-    // 扫描数字
-    // 包括整数、小数
-    // TODO: 此方法将替换 `scan_integer` 和 `scan_decimal` 方法
-    fn _scan_number() -> Result<bool> {
-        // TODO: 待实现
-        Ok(false)
     }
 
     // 扫描字面值（字符串）

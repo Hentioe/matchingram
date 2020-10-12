@@ -9,19 +9,19 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     /// 应该在这里结束。
-    #[error("should end here, column: {column:?}")]
+    #[error("it should end here (--> {column:?})")]
     ShouldEndHere { column: usize },
 
     /// 应该是开启的小括号。
-    #[error("should be `(` from column: {column:?}")]
+    #[error("it should be `(` (--> {column:?})")]
     ShouldOpenParenthesisHere { column: usize },
 
     /// 应该是关闭的小括号。
-    #[error("should be `)` from column: {column:?}")]
+    #[error("it should be `)` (--> {column:?})")]
     ShouldCloseParenthesisHere { column: usize },
 
     /// 缺失 token 位置信息。
-    #[error("missing token position, index: {index:?}")]
+    #[error("there may be a bug: missing token location data (index: {index:?})")]
     MissingPosition { index: usize },
 
     /// 不支持的运算符。

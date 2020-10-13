@@ -25,6 +25,7 @@ lazy_static! {
             &MessageFromId                  => &[Eq, Gt, Ge, Le][..],
             &MessageFromIsBot               => &[][..],
             &MessageFromFirstName           => &[Eq, In, Any, All, Hd][..],
+            &MessageFromLastName            => &[Eq, In, Any, All, Hd][..],
             &MessageFromFullName            => &[Eq, In, Any, All, Hd][..],
             &MessageFromLanguageCode        => &[Eq, In, Hd][..],
             &MessageForwardFromChat         => &[][..],
@@ -207,13 +208,16 @@ pub enum Field {
     /// 消息来源是否为 bot。
     #[strum(serialize = "message.from.is_bot")]
     MessageFromIsBot,
-    /// 消息来源的姓。
+    /// 消息来源用户的姓。
     #[strum(serialize = "message.from.first_name")]
     MessageFromFirstName,
-    /// 消息来源的全名。
+    /// 消息来源用户的名。
+    #[strum(serialize = "message.from.first_name")]
+    MessageFromLastName,
+    /// 消息来源用户的全名。
     #[strum(serialize = "message.from.full_name")]
     MessageFromFullName,
-    /// 消息来源的语言代码。
+    /// 消息来源用户的语言代码。
     #[strum(serialize = "message.from.language_code")]
     MessageFromLanguageCode,
     /// 消息来自转发。
@@ -610,6 +614,14 @@ impl Cont {
                 Operator::Any => ufh!(message.from).first_name.any_ope(self.value()?),
                 Operator::All => ufh!(message.from).first_name.all_ope(self.value()?),
                 Operator::Hd => ufh!(message.from).first_name.hd_ope(self.value()?),
+                _ => Err(unsupported_operator_err()?),
+            },
+            Field::MessageFromLastName => match self.operator()? {
+                Operator::Eq => ufh!(message.from).last_name.eq_ope(self.value()?),
+                Operator::In => ufh!(message.from).last_name.in_ope(self.value()?),
+                Operator::Any => ufh!(message.from).last_name.any_ope(self.value()?),
+                Operator::All => ufh!(message.from).last_name.all_ope(self.value()?),
+                Operator::Hd => ufh!(message.from).last_name.hd_ope(self.value()?),
                 _ => Err(unsupported_operator_err()?),
             },
             Field::MessageFromFullName => match self.operator()? {

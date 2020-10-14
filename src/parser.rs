@@ -260,8 +260,7 @@ impl<'a> Parser<'a> {
             return Ok(Value::Integer(value_integer));
         }
 
-        // TODO: 缺乏包含小数值的解析测试。
-        // 转换小数
+        // 转换小数。
         if self.ct == Some(&Token::Decimal) {
             let value_data = self.at_data(self.pos)?;
             let string_value = value_data.iter().collect::<String>();

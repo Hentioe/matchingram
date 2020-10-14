@@ -1,5 +1,5 @@
 use matchingram::lexer::Lexer;
-use matchingram::models::Message;
+use matchingram::models::{Location, Message};
 use matchingram::parser::Parser;
 
 #[test]
@@ -33,4 +33,30 @@ fn test_parser() {
     assert!(!matcher.match_message(&message1).unwrap());
     assert!(!matcher.match_message(&message2).unwrap());
     assert!(matcher.match_message(&message3).unwrap());
+}
+
+#[test]
+fn test_parse_number() {
+    let rule = r#"(message.text.len gt -5) or (message.location.latitude gt -0.2)"#;
+    let input = rule.chars().collect::<Vec<_>>();
+    let mut lexer = Lexer::new(&input);
+    let parser = Parser::new(&mut lexer).unwrap();
+    let mut matcher = parser.parse().unwrap();
+
+    // TODO: 以下的 assertions 应该以测试 Matcher 结构的字段内容为主，而不是测试匹配结果。
+
+    let message1 = Message {
+        text: Some(String::from("我有六个字。")),
+        ..Default::default()
+    };
+    let message2 = Message {
+        location: Some(Location {
+            latitude: -0.1,
+            longitude: 0.0,
+        }),
+        ..Default::default()
+    };
+
+    assert!(matcher.match_message(&message1).unwrap());
+    assert!(matcher.match_message(&message2).unwrap());
 }

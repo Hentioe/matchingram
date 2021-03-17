@@ -31,7 +31,7 @@ fn load_data_file(fname: &str) -> Vec<u8> {
                 );
             }
 
-            panic!(e.to_string());
+            std::panic::panic_any(e.to_string())
         }
         Ok(bytes) => bytes,
     }

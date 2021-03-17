@@ -1,4 +1,4 @@
-[tasks."data.gen"]
+[tasks.data-gen]
 script_runner = "@rust"
 script = [
     '''

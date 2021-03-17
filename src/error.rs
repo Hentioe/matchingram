@@ -2,7 +2,7 @@
 
 use super::lexer::Token;
 use super::matches::{Field, Value};
-use super::ope::Operator;
+use super::operator::Operator;
 use thiserror::Error;
 
 /// 错误类别。

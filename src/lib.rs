@@ -25,7 +25,7 @@ pub mod falsey;
 pub mod lexer;
 pub mod matches;
 pub mod models;
-pub mod ope;
+pub mod operator;
 pub mod parser;
 pub mod result;
 pub mod truthy;

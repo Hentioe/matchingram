@@ -9,7 +9,7 @@ use strum_macros::{EnumString, ToString};
 use super::error::Error;
 use super::falsey::UnwrapOrFalseyHosting;
 use super::models::Message;
-use super::ope::{prelude::*, Operator};
+use super::operator::{prelude::*, Operator};
 use super::result::Result;
 use super::truthy::IsTruthy;
 
@@ -92,7 +92,7 @@ lazy_static! {
 /// ```
 /// use matchingram::models::Message;
 /// use matchingram::matches::*;
-/// use matchingram::ope::Operator;
+/// use matchingram::operator::Operator;
 ///
 /// // 手动创建一个匹配器对象：
 /// let groups = vec![
